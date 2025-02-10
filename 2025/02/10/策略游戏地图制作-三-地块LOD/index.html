@@ -1,0 +1,251 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>策略游戏地图制作(三)-地块LOD | 记录游戏开发历程</title>
+
+  
+  <meta name="author" content="Nobody">
+  
+
+  
+  <meta name="description" content="1.LOD技术概述LOD（Level Of Detail）是游戏制作中的重要技术，它的思想很简单，即根据模型在屏幕的占比或直接根据摄像机到模型的距离决定该模型应该采用的精度级别，离的远采用更低精度，以降低渲染成本。
+
+    
+    图：不同LOD级别的模型
+
+
+通常来讲我们可以预制不同LOD的M">
+  
+
+  
+  
+  <meta name="keywords" content="">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="策略游戏地图制作(三)-地块LOD"/>
+
+  <meta property="og:site_name" content="记录游戏开发历程"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="记录游戏开发历程" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">记录游戏开发历程</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>策略游戏地图制作(三)-地块LOD</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2025/02/10/策略游戏地图制作-三-地块LOD/" rel="bookmark">
+        <time class="entry-date published" datetime="2025-02-10T09:55:08.000Z">
+          2025-02-10
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h1 id="1-LOD技术概述"><a href="#1-LOD技术概述" class="headerlink" title="1.LOD技术概述"></a>1.LOD技术概述</h1><p>LOD（Level Of Detail）是游戏制作中的重要技术，它的思想很简单，即根据模型在屏幕的占比或直接根据摄像机到模型的距离决定该模型应该采用的精度级别，离的远采用更低精度，以降低渲染成本。</p>
+<figure>
+    <img src="images/Chapter03/Different_LOD_Models.png" width="700" height="392" alt="image">
+    <figcaption>图：不同LOD级别的模型</figcaption>
+</figure>
+
+<p>通常来讲我们可以预制不同LOD的Mesh，程序启动时载入内存，然后去做动态切换。像UE可以对导入的模型自动生成不同LOD级别模型，这样做的代价是存储了更多模型Mesh，所以LOD也算一种空间换时间的做法。</p>
+<p>LOD不仅仅体现在渲染优化上，它更应该理解为一种思想。LOD在其他领域中也有应用，比如引擎的物理碰撞、动画更新、AI等都可以使用LOD的思想进行优化，许多游戏在做gameplay时也会考虑应用LOD</p>
+<h2 id="1-1-LOD-选取"><a href="#1-1-LOD-选取" class="headerlink" title="1.1.LOD 选取"></a>1.1.LOD 选取</h2><p>LOD选取即确定一个模型应该采用的LOD级别，在Unity的LOD Group组件中，提供距离过渡和占屏幕比例的过渡方式，这是比较常用的方法</p>
+<figure>
+    <img src="images/Chapter03/Unity_LOD_Group.png" width="400" height="350" alt="image">
+    <figcaption>图：Unity的LOD Group（虽然它更像是个玩具）</figcaption>
+</figure>
+
+<p>一些游戏会采用更复杂的LOD方案，比如采用四叉树，采用四叉树可以达到更精细的划分效果。</p>
+<figure>
+    <img src="images/Chapter03/QuadTree_Tile.png" width="700" height="392" alt="image">
+    <figcaption>图：四叉树中不同层级的地块</figcaption>
+</figure>
+
+<p>网上有许多四叉树方案的具体实现，例如：<br><a href = "http://www.cppblog.com/liangairan/articles/48705.html"></a><br><a href = "https://www.cnblogs.com/rainbow70626/p/5268770.html"></a></p>
+<h2 id="1-2-LOD-过渡"><a href="#1-2-LOD-过渡" class="headerlink" title="1.2.LOD 过渡"></a>1.2.LOD 过渡</h2><p>LOD过渡是处理不同LOD级别之间的过程，由于不同的LOD级别存在精度差别，会出现裂缝，要修补这类问题，通常有以下的解决方法：</p>
+<p>（1）.直接设置顶点位置；很简单粗暴的解决方案，但很多时候却意外地有效，尤其是在修补因Mesh而产生的接缝上，原理图如下。这种修复方式依然会在不同LOD层级之间留下可见的界限</p>
+ <figure>
+    <img src="images/Chapter03/SetVertPos_FixSeam.png" width="600" height="330" alt="image">
+    <figcaption>图：直接设置顶点位置来修补接缝</figcaption>
+</figure>
+
+
+<p>（2）.采用特殊的过渡地带；如用精细的三角型组成条带，但这样做也在每个层级间都留下明显的分界线。</p>
+<figure>
+    <img src="images/Chapter03/SetTransitPart_FixSeam.png" width="600" height="330" alt="image">
+    <figcaption>图：采用特殊的过渡地带修补接缝</figcaption>
+</figure>
+
+
+<p>（3）.无缝过渡；采用一些网格变形算法可以实现不同LOD级别之间的无缝过渡，例如CDLOD，其实现链接：<br><a href = "https://github.com/fstrugar/CDLOD"></a></p>
+<figure>
+    <img src="images/Chapter03/CDLOD_Img.png" width="600" height="350" alt="image">
+    <figcaption>图：CDLOD的演示视频（太糊了）</figcaption>
+</figure>
+
+
+<h2 id="1-3-其他LOD相关技术"><a href="#1-3-其他LOD相关技术" class="headerlink" title="1.3.其他LOD相关技术"></a>1.3.其他LOD相关技术</h2><p>除了上面举例的一些方案外，也有许多被广泛应用的LOD方案，以下举例</p>
+<p>（1）.HLOD；HLOD在UE中有内置的支持，它适用于一些3A大世界游戏，基本思想是用一个网格代替多个网格，当距离足够远的时候合并静态网格，可以减少渲染的drawcall，还能节省内存<br>HLOD的介绍：<br><a href = "https://docs.google.com/document/d/1OPYDNpwGFpkBorZ3GCpL9Z4ck-6qRRD1tzelUQ0UvFc/edit?pli=1&tab=t.0#heading=h.kcsddwbeir6p"></a><br>UE的HLOD实现：<br><a href = "https://dev.epicgames.com/documentation/en-us/unreal-engine/hierarchical-level-of-detail-in-unreal-engine?application_version=5.4"></a></p>
+<p>（2）.Nanite；其实Nanite也算一个LOD方案，它以一个网格上的Cluster（簇）为单位进行LOD切换，所以切换时玩家不会感觉到明显的突兀。如何划分Cluster、如何修补Cluster之间接缝都是非常有意思的问题。<br>UE官方的视频：<br><a href = "https://www.youtube.com/watch?v=TMorJX3Nj6U&t=7978s"></a><br>感兴趣的也可以看看这个视频对Nanite的解读：<br><a href = "https://www.bilibili.com/video/BV1VV4y157Zb/"></a></p>
+<figure>
+    <img src="images/Chapter03/Nanite_Img.png" width="700" height="392" alt="image">
+    <figcaption>图：Nanite划分簇</figcaption>
+</figure>
+
+
+<h1 id="2-在策略游戏地图中应用LOD"><a href="#2-在策略游戏地图中应用LOD" class="headerlink" title="2.在策略游戏地图中应用LOD"></a>2.在策略游戏地图中应用LOD</h1><p>通常我们在评价地形系统的效果时，都会考虑到渲染性能，渲染性能主要体现在网格顶点的数量上，这是最基本的。除此之外，纹理处理、地表植被处理等也很重要，不过这是后话。</p>
+<p>在上一节中，我们为地形做了Cluster-Tile两个层级的划分，这种以Chunk形式组织地图数据的思想在大地图游戏中是非常常用的。以Tile作为LOD的切换单位，采用ChunkLOD的思想去实际应用LOD，具体思路如下：</p>
+<p>1.以TerrainTile作为LOD切换的基本单位；<br>2.LOD的切换时机根据摄像机到地块的距离决定，因为是线性的，不会出现跨LOD级别的地块连在一起的情况；<br>3.LOD的过渡地带采用直接设置顶点位置的方式，无他，因为操作简单。采用特殊的过渡地带或者无缝过渡暂不考虑；<br>4.不同LOD的Mesh建议静态生成，程序启动时加载进入内存进行切换（当然如果Mesh数据过大，不想做持久化，也可以动态生成）</p>
+<p>有以上思路后，可以确定做LOD的基本步骤：<br>1.为TerrainTile类添加生成不同LOD级别的方法<br>2.增加UpdateTerrain方法，用于动态地根据摄像机距离决定每个Tile应采取的LOD级别<br>3.在Update或者其他Tick方法中调用UpdateTerrain，<br>4.因为LOD级别随时可能改变，LOD接缝处理放到UpdateTerrain中</p>
+<h2 id="2-1-构建不同LOD-Mesh"><a href="#2-1-构建不同LOD-Mesh" class="headerlink" title="2.1.构建不同LOD Mesh"></a>2.1.构建不同LOD Mesh</h2><p>在Tile中需要为每个Tile构建不同LOD级别的Mesh，对于每个更低级的LOD级别，顶点数目设置成一半即可，例如我们有4级LOD分级，Tile的尺寸为256，那么LOD0：256顶点每行，LOD1：128每行，LOD2：64每行，LOD3：32每行</p>
+<figure>
+    <img src="images/Chapter03/Different_LOD_Meshes.png" width="700" height="392" alt="image">
+    <figcaption>图：生成不同LOD层级网格</figcaption>
+</figure>
+
+<p>在TerrainCluster构建Tile时添加：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] lodLevels = <span class="keyword">new</span> <span class="built_in">int</span>[LODLevel];</span><br><span class="line"><span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; LODLevel; i++) &#123;</span><br><span class="line">    lodLevels[i] = i;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// generate mesh data for every LOD level</span></span><br><span class="line"><span class="built_in">int</span> curLODLevel = LODLevel - <span class="number">1</span>;</span><br><span class="line"><span class="keyword">while</span> (curLODLevel &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="comment">// when num fix == 1, the vert num per line is equal to tileSize</span></span><br><span class="line">    <span class="built_in">int</span> vertexNumFix = (<span class="built_in">int</span>)Mathf.Pow(<span class="number">2</span>, (LODLevel - curLODLevel - <span class="number">1</span>));</span><br><span class="line">    <span class="keyword">if</span> (vertexNumFix &gt; tileSize) &#123;</span><br><span class="line">        <span class="comment">// wrong</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; tileNumPerLine; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; tileNumPerLine; j++) &#123;</span><br><span class="line">            terrainTileList[i, j].SetMeshData(curLODLevel, tileSize, vertexNumFix, terrainClusterSize, heightDataManager);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    curLODLevel--;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在TerrainTile构建Mesh时添加如下代码。原理很简单，每次生成较低精度的LOD级别时，省略一半的顶点，</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">SetMeshData</span>(<span class="params"><span class="built_in">int</span> curLODLevel, <span class="built_in">int</span> tileSize, <span class="built_in">int</span> vertexNumFix, Vector3Int terrainClusterSize, HeightDataManager heightDataManager</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.tileSize = tileSize;</span><br><span class="line">    <span class="keyword">this</span>.heightDataManager = heightDataManager;</span><br><span class="line">    <span class="comment">// caculate tile&#x27;s start point</span></span><br><span class="line">    <span class="built_in">float</span> startX = tileIdxX * tileSize;</span><br><span class="line">    <span class="built_in">float</span> startZ = tileIdxY * tileSize;</span><br><span class="line">    Vector3 startPoint = <span class="keyword">new</span> Vector3(startX, <span class="number">0</span>, startZ) + <span class="keyword">this</span>.clusterStartPoint;       <span class="comment">// </span></span><br><span class="line">    tileCenterPos = startPoint + <span class="keyword">new</span> Vector3(tileSize / <span class="number">2</span>, <span class="number">0</span>, tileSize / <span class="number">2</span>);</span><br><span class="line">    <span class="built_in">int</span> gridNumPerLine = tileSize / vertexNumFix;</span><br><span class="line">    <span class="built_in">int</span> gridSize = tileSize / gridNumPerLine;</span><br><span class="line">    <span class="built_in">int</span> vertexPerLine = tileSize / vertexNumFix + <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">int</span> gridNumPerLineFixed = gridNumPerLine + <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">int</span> vertexPerLineFixed = vertexPerLine + <span class="number">2</span>;</span><br><span class="line">    LODMeshes[curLODLevel] = <span class="keyword">new</span> MeshData();</span><br><span class="line">    MeshData meshData = LODMeshes[curLODLevel];</span><br><span class="line">    meshData.InitMeshData(gridNumPerLine, gridNumPerLineFixed, vertexPerLine, vertexPerLineFixed);</span><br><span class="line">    <span class="built_in">int</span> curInVertIdx = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">int</span> curOutVertIdx = <span class="number">-1</span>;</span><br><span class="line">    <span class="comment">//int[,] vertexIndiceMap = new int[vertexPerLineFixed, vertexPerLineFixed];</span></span><br><span class="line">    <span class="comment">// <span class="doctag">TODO:</span> use job system</span></span><br><span class="line">    Vector3 offsetInMeshVert = <span class="keyword">new</span> Vector3(gridSize, <span class="number">0</span>, gridSize);</span><br><span class="line">    <span class="keyword">for</span>(<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; vertexPerLineFixed; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; vertexPerLineFixed; j++) &#123;</span><br><span class="line">            <span class="built_in">bool</span> isVertOutOfMesh = (i == <span class="number">0</span>) || (i == vertexPerLineFixed - <span class="number">1</span>) || (j == <span class="number">0</span>) || (j == vertexPerLineFixed - <span class="number">1</span>);</span><br><span class="line">            Vector3 vert = <span class="keyword">new</span> Vector3(gridSize * i, <span class="number">0</span>, gridSize * j) + startPoint - offsetInMeshVert;</span><br><span class="line">            <span class="comment">//float height = SampleFromHeightData(terrainClusterSize, vert);</span></span><br><span class="line">            <span class="built_in">float</span> height = heightDataManager.SampleFromHeightData(longitude, latitude, vert, clusterStartPoint);</span><br><span class="line">            <span class="comment">//float height = 0;</span></span><br><span class="line">            vert.y = height;</span><br><span class="line">            Vector2 uv = <span class="keyword">new</span> Vector2(vert.x / terrainClusterSize.x, vert.z / terrainClusterSize.z);</span><br><span class="line">            <span class="keyword">if</span> (isVertOutOfMesh) &#123;</span><br><span class="line">                meshData.AddVertex(vert, uv, curOutVertIdx);</span><br><span class="line">                meshData.SetIndiceInMap(i, j, curOutVertIdx);</span><br><span class="line">                <span class="comment">//vertexIndiceMap[i, j] = curOutVertIdx;</span></span><br><span class="line">                curOutVertIdx --;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                meshData.AddVertex(vert, uv, curInVertIdx);</span><br><span class="line">                meshData.SetIndiceInMap(i, j, curInVertIdx);</span><br><span class="line">                <span class="comment">//vertexIndiceMap[i, j] = curInVertIdx;</span></span><br><span class="line">                curInVertIdx ++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">int</span> curGridIdx = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; gridNumPerLineFixed; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; gridNumPerLineFixed; j++) &#123;</span><br><span class="line">            <span class="comment">// i, j 是当前遍历到的 grid 的 index</span></span><br><span class="line">            <span class="built_in">int</span> cur_w = curGridIdx % gridNumPerLineFixed;</span><br><span class="line">            <span class="built_in">int</span> cur_h = curGridIdx / gridNumPerLineFixed;</span><br><span class="line">            <span class="built_in">int</span> next_w = cur_w + <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">int</span> next_h = cur_h + <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">int</span> a = meshData.GetIndiceInMap(cur_w, cur_h);</span><br><span class="line">            <span class="built_in">int</span> b = meshData.GetIndiceInMap(cur_w, next_h);</span><br><span class="line">            <span class="built_in">int</span> c = meshData.GetIndiceInMap(next_w, next_h);</span><br><span class="line">            <span class="built_in">int</span> d = meshData.GetIndiceInMap(next_w, cur_h);</span><br><span class="line">            meshData.AddTriangle(a, b, c, i, j);</span><br><span class="line">            meshData.AddTriangle(a, c, d, i, j);</span><br><span class="line">            curGridIdx++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    meshData.RecaculateNormal();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-2-UpdateTerrain"><a href="#2-2-UpdateTerrain" class="headerlink" title="2.2.UpdateTerrain"></a>2.2.UpdateTerrain</h2><p>UpdateTerrain处主要是为了在程序运行时做LOD的更新，以下是关键代码。下方代码中的一些部分留到后面讲解，并到后面修接缝时给出一些方法的代码。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">UpdateTerrain</span>()</span> &#123;</span><br><span class="line">    <span class="comment">// NOTE : 当前直接使用主摄像机位置判断是否要加载此块</span></span><br><span class="line">    Vector3 cameraPos = Camera.main.transform.position;</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> cluster <span class="keyword">in</span> clusterList) &#123;</span><br><span class="line">        <span class="keyword">if</span> (cluster.IsValid) &#123;</span><br><span class="line">            <span class="built_in">int</span> x = cluster.idxX;</span><br><span class="line">            <span class="built_in">int</span> y = cluster.idxY;</span><br><span class="line">            <span class="built_in">int</span> leftIdx = x - <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">int</span> rightIdx = x + <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">int</span> upIdx = y + <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">int</span> downIdx = y - <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">int</span>[,] direction = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">4</span>, <span class="number">2</span>]&#123;</span><br><span class="line">                &#123;leftIdx, y&#125;,&#123;rightIdx, y&#125;, &#123;x, upIdx&#125;, &#123;x, downIdx&#125;</span><br><span class="line">            &#125;;</span><br><span class="line">            <span class="comment">//  find neighbours, the sequence is : left, right, up, down;</span></span><br><span class="line">            List&lt;TerrainCluster&gt; terrainClusters = <span class="keyword">new</span> List&lt;TerrainCluster&gt;(<span class="number">4</span>) &#123; <span class="literal">null</span>, <span class="literal">null</span>, <span class="literal">null</span>, <span class="literal">null</span>&#125;;</span><br><span class="line">            <span class="keyword">for</span>(<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++) &#123;</span><br><span class="line">                <span class="built_in">int</span> neighborX = direction[i, <span class="number">0</span>];</span><br><span class="line">                <span class="built_in">int</span> neighborY = direction[i, <span class="number">1</span>];</span><br><span class="line">                <span class="keyword">if</span> (clusterList.IsValidIndex(neighborX, neighborY) &amp;&amp; clusterList[neighborX, neighborY].IsValid) &#123;</span><br><span class="line">                    terrainClusters[i] = clusterList[neighborX, neighborY];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            TDList&lt;<span class="built_in">int</span>&gt; fullLodLevelMap = clusterList[x, y].GetFullLODLevelMap(cameraPos, </span><br><span class="line">                terrainClusters[<span class="number">0</span>], terrainClusters[<span class="number">1</span>], terrainClusters[<span class="number">2</span>], terrainClusters[<span class="number">3</span>]);</span><br><span class="line">            cluster.UpdateTerrainCluster(fullLodLevelMap);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    Debug.Log(<span class="built_in">string</span>.Format(<span class="string">&quot;update terrain cluster num &#123;0&#125;&quot;</span>, clusterList.GetLength(<span class="number">0</span>) * clusterList.GetLength(<span class="number">0</span>)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>更新时机可以自己确定，建议用摄像机移动事件触发更新，每当摄像机移动到不同地块时触发更新，以降低检测代价。这里的UpdateTerrain直接放到了编辑器用按钮来执行，运行时的机制暂时未写，放到后面做。</p>
+<h2 id="2-3-获得全局LODMap"><a href="#2-3-获得全局LODMap" class="headerlink" title="2.3.获得全局LODMap"></a>2.3.获得全局LODMap</h2><p>之前提到过，要在UpdateTerrain中去处理LOD接缝，因为每个地块的LOD接缝都是动态改变的，我们需要实时地知道每个Tile当前的LOD级别，所以需要在确定LOD后，再进行接缝修补。为此我们只需要一个二维数组，记录每个Index下的Tile的LOD即可完成</p>
+<p>同样地因为在TerrainCluster中我们只知道这个Cluster下属的Tile的LOD级别，而不知道其他cluster下的Tile的LOD，这就会导致不同Cluster衔接的Tile之间出现接缝，如下图所示：</p>
+<figure>
+    <img src="images/Chapter03/Seam_BetweenClusters.png" width="700" height="392" alt="image">
+    <figcaption>图：不同Cluster之间的接缝(图右)</figcaption>
+</figure>
+
+
+<p>为此我们需要获得全局的LODMap然后传入到Cluster中进行更新。在上方的代码中，我们获取了fullLodLevelMap，即： </p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TDList&lt;<span class="built_in">int</span>&gt; fullLodLevelMap = clusterList[x, y].GetFullLODLevelMap(cameraPos, terrainClusters[<span class="number">0</span>],  terrainClusters[<span class="number">1</span>],  terrainClusters[<span class="number">2</span>],  terrainClusters[<span class="number">3</span>]);</span><br></pre></td></tr></table></figure>
+
+<p>这个方法会返回本Cluster下的所有Tile的LOD级别，并会多包含Cluster相邻的其他Cluster下的Tile的LOD级别。具体逻辑很简单，获取到相邻的四个TerrainCluster即可，代码如下：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">internal</span> TDList&lt;<span class="built_in">int</span>&gt; <span class="title">GetFullLODLevelMap</span>(<span class="params">Vector3 cameraPos, TerrainCluster left, TerrainCluster right, TerrainCluster up, TerrainCluster down</span>)</span> &#123;</span><br><span class="line">    <span class="built_in">int</span> tileWidth = terrainTileList.GetLength(<span class="number">1</span>);</span><br><span class="line">    <span class="built_in">int</span> tileHeight = terrainTileList.GetLength(<span class="number">0</span>);</span><br><span class="line">    TDList&lt;<span class="built_in">int</span>&gt; lodLevelMap = GetLODLevelMap(cameraPos);</span><br><span class="line">    TDList&lt;<span class="built_in">int</span>&gt; fullLodLevelMap = <span class="keyword">new</span> TDList&lt;<span class="built_in">int</span>&gt;(tileWidth + <span class="number">2</span>, tileHeight + <span class="number">2</span>);</span><br><span class="line">    <span class="comment">// copy cluster&#x27;s lodlevelmap to fulllodlevelmap</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="built_in">int</span> i = <span class="number">1</span>; i &lt; tileWidth + <span class="number">1</span>; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="built_in">int</span> j = <span class="number">1</span>; j &lt; tileHeight + <span class="number">1</span>; j++) &#123;</span><br><span class="line">            fullLodLevelMap[i, j] = lodLevelMap[i - <span class="number">1</span>, j - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// copy egde&#x27;s lodlevelmap to fulllodlevelmap. careful for the sequence</span></span><br><span class="line">    List&lt;<span class="built_in">int</span>&gt; leftLODLevel = <span class="keyword">new</span> List&lt;<span class="built_in">int</span>&gt;() &#123; <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span>&#125;;</span><br><span class="line">    <span class="keyword">if</span> (left != <span class="literal">null</span>) &#123;</span><br><span class="line">        leftLODLevel = left.GetEdgeLODLevel(cameraPos, GetEdgeDir.Right);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; tileHeight; i ++) &#123;</span><br><span class="line">        fullLodLevelMap[<span class="number">0</span>, i + <span class="number">1</span>] = leftLODLevel[i];</span><br><span class="line">    &#125;</span><br><span class="line">    List&lt;<span class="built_in">int</span>&gt; rightLODLevel = <span class="keyword">new</span> List&lt;<span class="built_in">int</span>&gt;() &#123; <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span> &#125;;</span><br><span class="line">    <span class="keyword">if</span> (right != <span class="literal">null</span>) &#123;</span><br><span class="line">        rightLODLevel = right.GetEdgeLODLevel(cameraPos, GetEdgeDir.Left);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; tileHeight; i++) &#123;</span><br><span class="line">        fullLodLevelMap[tileHeight + <span class="number">1</span>, i + <span class="number">1</span>] = rightLODLevel[i];</span><br><span class="line">    &#125;</span><br><span class="line">    List&lt;<span class="built_in">int</span>&gt; upLODLevel = <span class="keyword">new</span> List&lt;<span class="built_in">int</span>&gt;() &#123; <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span> &#125;;</span><br><span class="line">    <span class="keyword">if</span> (up != <span class="literal">null</span>) &#123;</span><br><span class="line">        upLODLevel = up.GetEdgeLODLevel(cameraPos, GetEdgeDir.Down);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; tileWidth; i++) &#123;</span><br><span class="line">        fullLodLevelMap[i + <span class="number">1</span>, tileWidth + <span class="number">1</span>] = upLODLevel[i];</span><br><span class="line">    &#125;</span><br><span class="line">    List&lt;<span class="built_in">int</span>&gt; downLODLevel = <span class="keyword">new</span> List&lt;<span class="built_in">int</span>&gt;() &#123; <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span>, <span class="number">-1</span> &#125;;</span><br><span class="line">    <span class="keyword">if</span> (down != <span class="literal">null</span>) &#123;</span><br><span class="line">        downLODLevel = down.GetEdgeLODLevel(cameraPos, GetEdgeDir.Up);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; tileWidth; i++) &#123;</span><br><span class="line">        fullLodLevelMap[i + <span class="number">1</span>, <span class="number">0</span>] = downLODLevel[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fullLodLevelMap;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="2-4-处理LOD接缝"><a href="#2-4-处理LOD接缝" class="headerlink" title="2.4.处理LOD接缝"></a>2.4.处理LOD接缝</h2><p>在上面的UpdateTerrain方法中，为了减轻代码量，将部分的更新逻辑放到了Cluster中做，即下方所示：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cluster.UpdateTerrainCluster(fullLodLevelMap);</span><br></pre></td></tr></table></figure>
+
+<p>该方法的逻辑处理中，会多一步判断相邻的Tile的LOD级别是否不同，如果不同就表示要修复对应的边，完整代码如下：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">UpdateTerrainCluster</span>(<span class="params">TDList&lt;<span class="built_in">int</span>&gt; fullLodLevelMap</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> tileMeshData <span class="keyword">in</span> terrainTileList) &#123;</span><br><span class="line">        <span class="comment">// use full lod map, so index offset is 1</span></span><br><span class="line">        <span class="built_in">int</span> x = tileMeshData.tileIdxX + <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">int</span> y = tileMeshData.tileIdxY + <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">int</span> lodLevel = fullLodLevelMap[x, y];</span><br><span class="line">        <span class="built_in">int</span> left = x - <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">int</span> right = x + <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">int</span> top = y + <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">int</span> bottom = y - <span class="number">1</span>;</span><br><span class="line">        <span class="comment">// check if should fix LOD seam</span></span><br><span class="line">        <span class="built_in">int</span> fixSeamDirection = <span class="number">10000</span>;</span><br><span class="line">        <span class="built_in">int</span>[,] direction = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">4</span>, <span class="number">2</span>]&#123;</span><br><span class="line">            &#123;left, y&#125;,&#123;right, y&#125;, &#123;x, top&#125;, &#123;x, bottom&#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++) &#123;</span><br><span class="line">            <span class="built_in">int</span> idxX = direction[i, <span class="number">0</span>];</span><br><span class="line">            <span class="built_in">int</span> idxY = direction[i, <span class="number">1</span>];</span><br><span class="line">            <span class="keyword">if</span> (fullLodLevelMap.IsValidIndex(idxX, idxY) &amp;&amp; lodLevel &gt; fullLodLevelMap[idxX, idxY]) &#123;</span><br><span class="line">                fixSeamDirection |= (<span class="number">1</span> &lt;&lt; i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 不管LOD层级有没有发生改变，都必须重新刷新mesh，因为要处理LOD接缝</span></span><br><span class="line">        Mesh mesh = tileMeshData.GetMesh(lodLevel, fixSeamDirection);</span><br><span class="line">        tileMeshData.SetMesh(mesh);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//Debug.Log(string.Format(&quot;update successfully! handle tile num &#123;0&#125;&quot;, terrainTileList.GetLength(0)));</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在Tile的MeshData类中，传入具体的LOD级别和需要修复的边即可完成接缝修复。对于要修复的边，如果相邻的Tile的LOD级别更大（更没那么精细），我们只需要将它的多余的顶点设置为相邻顶点的高度即可，原理图如下所示：</p>
+<figure>
+    <img src="images/Chapter03/Condition_FixSeam.png" width="300" height="300" alt="image">
+    <figcaption>图：如果相邻Tile的LOD不同则需要修复</figcaption>
+</figure>
+
+<p>完整代码如下（注：下方的RecaculateBorderNormal作用和RecaculateNormal一样，但仅计算边缘顶点的法线，因为没必要再重新计算Tile内部的顶点法线了）：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Mesh <span class="title">GetMesh</span>(<span class="params"><span class="built_in">int</span> tileIdxX, <span class="built_in">int</span> tileIdxY, <span class="built_in">int</span> fixDirection</span>)</span> &#123;</span><br><span class="line">    Mesh mesh = <span class="keyword">new</span> Mesh();</span><br><span class="line">    mesh.name = <span class="built_in">string</span>.Format(<span class="string">&quot;TerrainMesh_LOD&#123;0&#125;_Idx&#123;1&#125;_&#123;2&#125;&quot;</span>, curLODLevel, tileIdxX, tileIdxY);</span><br><span class="line">    <span class="comment">// fix the lod seam</span></span><br><span class="line">    fixedVertexs = vertexs;</span><br><span class="line">    fixedOutMeshVertexs = outofMeshVertexs;</span><br><span class="line">    <span class="built_in">bool</span> fixLeft = ((fixDirection &gt;&gt; <span class="number">0</span>) &amp; <span class="number">1</span>) == <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">bool</span> fixRight = ((fixDirection &gt;&gt; <span class="number">1</span>) &amp; <span class="number">1</span>) == <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">bool</span> fixTop = ((fixDirection &gt;&gt; <span class="number">2</span>) &amp; <span class="number">1</span>) == <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">bool</span> fixBottom = ((fixDirection &gt;&gt; <span class="number">3</span>) &amp; <span class="number">1</span>) == <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span> (fixLeft) &#123;</span><br><span class="line">        <span class="comment">// NOTE : 这块代码和外层 TileMeshData.SetMeshData 存在耦合，很重的耦合</span></span><br><span class="line">        FixLODEdgeSeam(<span class="literal">true</span>, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (fixRight) &#123;</span><br><span class="line">        FixLODEdgeSeam(<span class="literal">true</span>, vertexPerLineFixed - <span class="number">1</span>, vertexPerLineFixed - <span class="number">2</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (fixTop) &#123;</span><br><span class="line">        FixLODEdgeSeam(<span class="literal">false</span>, vertexPerLineFixed - <span class="number">1</span>, vertexPerLineFixed - <span class="number">2</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (fixBottom) &#123;</span><br><span class="line">        FixLODEdgeSeam(<span class="literal">false</span>, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//RecaculateNormal();</span></span><br><span class="line">    RecaculateBorderNormal();</span><br><span class="line">    mesh.vertices = fixedVertexs;</span><br><span class="line">    mesh.normals = normals;</span><br><span class="line">    mesh.triangles = triangles;</span><br><span class="line">    mesh.uv = uvs;</span><br><span class="line">    mesh.colors = colors;</span><br><span class="line">    <span class="keyword">return</span> mesh;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对每个需要修复的边缘，封装如下方法进行操作，该方法会根据传入的参数判断对哪条边进行修复：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">FixLODEdgeSeam</span>(<span class="params"><span class="built_in">bool</span> isVertical, <span class="built_in">int</span> outIdx, <span class="built_in">int</span> inIdx</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">2</span>; i &lt; vertexPerLine + <span class="number">1</span>; i += <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="comment">// traverse the indice map and reset the vertex position to neighbor&#x27;s average</span></span><br><span class="line">        <span class="built_in">int</span> outNgb1Idx, outNgb2Idx, outofMeshIdx;</span><br><span class="line">        <span class="built_in">int</span> inNgb1Idx, inNgb2Idx, inMeshIdx;</span><br><span class="line">        <span class="comment">//Vector3 pointA = (indexA &lt; 0) ? outofMeshVertexs[-indexA - 1] : vertexs[indexA];</span></span><br><span class="line">        <span class="keyword">if</span> (isVertical) &#123;</span><br><span class="line">            outNgb1Idx = vertexIndiceMap[outIdx, i - <span class="number">1</span>];</span><br><span class="line">            outNgb2Idx = vertexIndiceMap[outIdx, i + <span class="number">1</span>];</span><br><span class="line">            outofMeshIdx = vertexIndiceMap[outIdx, i];</span><br><span class="line">            inNgb1Idx = vertexIndiceMap[inIdx, i - <span class="number">1</span>];</span><br><span class="line">            inNgb2Idx = vertexIndiceMap[inIdx, i + <span class="number">1</span>];</span><br><span class="line">            inMeshIdx = vertexIndiceMap[inIdx, i];</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            outNgb1Idx = vertexIndiceMap[i - <span class="number">1</span>, outIdx];</span><br><span class="line">            outNgb2Idx = vertexIndiceMap[i + <span class="number">1</span>, outIdx];</span><br><span class="line">            outofMeshIdx = vertexIndiceMap[i, outIdx];</span><br><span class="line"></span><br><span class="line">            inNgb1Idx = vertexIndiceMap[i - <span class="number">1</span>, inIdx];</span><br><span class="line">            inNgb2Idx = vertexIndiceMap[i + <span class="number">1</span>, inIdx];</span><br><span class="line">            inMeshIdx = vertexIndiceMap[i, inIdx];</span><br><span class="line">        &#125;</span><br><span class="line">        fixedOutMeshVertexs[-outofMeshIdx - <span class="number">1</span>] = (fixedOutMeshVertexs[-outNgb1Idx - <span class="number">1</span>] + fixedOutMeshVertexs[-outNgb2Idx - <span class="number">1</span>]) / <span class="number">2</span>;</span><br><span class="line">        fixedVertexs[inMeshIdx] = (fixedVertexs[inNgb1Idx] + fixedVertexs[inNgb2Idx]) / <span class="number">2</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>执行UpdateTerrain后，最终结果，无缝地形：</p>
+<figure>
+    <img src="images/Chapter03/Fixed01.png" width="700" height="392" alt="image">
+    <img src="images/Chapter03/Fixed02.png" width="700" height="392" alt="image">
+    <figcaption>图：修补接缝后的地形</figcaption>
+</figure>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2025 Nobody
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>
