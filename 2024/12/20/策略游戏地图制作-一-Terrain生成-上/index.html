@@ -3,21 +3,30 @@
 <head>
   <meta charset="utf-8">
   
-  <title>记录游戏开发历程</title>
+  <title>策略游戏地图制作(一)_Terrain生成_上 | 记录游戏开发历程</title>
 
   
   <meta name="author" content="Nobody">
   
 
   
+  <meta name="description" content="一个策略游戏中最重要的部分就是它的地图，地图包含游戏中重要的战略信息，玩家的几乎所有操作都需要与地图的交互进行。而且，身为策略游戏玩家，表现效果丰富的策略地图，也能很好地满足大家指点江山、统筹全局（机枪往前移五米）的愿望。
+以下举例一些策略游戏内的地图
 
+    
+    图：《欧陆风云4》游戏地图">
+  
+
+  
+  
+  <meta name="keywords" content="">
   
 
   <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  
+  <meta property="og:title" content="策略游戏地图制作(一)_Terrain生成_上"/>
 
   <meta property="og:site_name" content="记录游戏开发历程"/>
 
@@ -45,189 +54,20 @@
   <nav class="site-navigation">
     <ul>
       
-        <li><a href="/">主页</a></li>
+        <li><a href="/">Home</a></li>
       
-        <li><a href="/archives">所有文章</a></li>
+        <li><a href="/archives">Archives</a></li>
       
     </ul>
   </nav>
 </header>
 
     <main class="site-main posts-loop">
-    
-  <article>
+    <article>
 
   
     
-    <h3 class="article-title"><a href="/2024/12/31/策略游戏地图制作-二-Terrain生成-下/"><span>策略游戏地图制作(二)_Terrain生成_下</span></a></h3>
-    
-  
-
-  <div class="article-top-meta">
-    <span class="posted-on">
-      <a href="/2024/12/31/策略游戏地图制作-二-Terrain生成-下/" rel="bookmark">
-        <time class="entry-date published" datetime="2024-12-30T16:00:00.000Z">
-          2024-12-31
-        </time>
-      </a>
-    </span>
-  </div>
-
-
-  
-
-  <div class="article-content">
-    <div class="entry">
-      
-        <h1 id="1-高度图处理"><a href="#1-高度图处理" class="headerlink" title="1.高度图处理"></a>1.高度图处理</h1><h2 id="1-1-高度图获取"><a href="#1-1-高度图获取" class="headerlink" title="1.1.高度图获取"></a>1.1.高度图获取</h2><p>高度图本质上是一个二维数组，或者一个灰度图，存储指定xy坐标下的高度信息。运行时对高度数据采样来得知一个vert应该应用的高度，从而生成地形。可以通过一些算法生成高度图（如噪声），但为还原真实地形地貌，此处直接使用真实地理高度图，后续添加对地图的编辑功能来做微调</p>
-<p>首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：<br><a href = "https://earthexplorer.usgs.gov/"></a></p>
-<p>打开网页后，在地图上点选以选取范围，转到DataSets下选择要下载的对应项</p>
-<figure>
-    <img src="images/Chapter02/Download_UGUS01.png" width="700" height="392" alt="image">
-    <figcaption>图：USGS界面</figcaption>
-</figure>
-
-<p>点击result或直接转到results页面即获取到对应的地块信息，可以选择TIF、DEM格式，这里使用TIF，下载后得到灰度图</p>
-<figure>
-    <img src="images/Chapter02/Download_UGUS02.png" width="700" height="392" alt="image">
-    <figcaption>图：USGS界面</figcaption>
-</figure>
-
-<p>下载得到的高度图内容，分辨率3601x3601，大小30MB左右：</p>
-<figure>
-    <img src="images/Chapter02/Download_UGUS03.png" width="700" height="392" alt="image">
-    <figcaption>图：下载得到的高度图内容</figcaption>
-</figure>
-
-
-<h2 id="1-2-高度图的序列化"><a href="#1-2-高度图的序列化" class="headerlink" title="1.2.高度图的序列化"></a>1.2.高度图的序列化</h2><p>得到高度图资源后，就可以考虑先对高度图进行预处理了。简要说一下处理高度图数据的思路：</p>
-<p>-首先，3601x3601的数据规模太大了，我们构建地图时完全不需要这么大的数据量，所以需要对原数据进行压缩处理，压缩为指定分辨率的数据<br>-其次，压缩后得到的高度信息可以序列化到一个指定格式的二进制文件，在Runtime时加载这个二进制文件，解析后再应用到Terrain上生成地形（之后会测试地图流式加载的性能，再思考优化）</p>
-<p>思路已有，那么就可以开始了</p>
-<p>先进行高度图压缩，采用简单的双线性插值，原理如图。最终返回目的分辨率尺寸的高度数据：（其实在这里可以做进一步的压缩工作，如果我们追求的地图精度不需要太高，完全可以换成单通道-8bit纹理来存储数据，后续如优化有需要再做改动）</p>
-<figure>
-    <img src="images/Chapter02/Bilinear.png" width="400" height="400" alt="image">
-    <figcaption>图：双线性插值的原理</figcaption>
-</figure>
-
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">float</span>[,] CompressHeightData(<span class="built_in">string</span> heightMapPath) &#123;</span><br><span class="line">    <span class="built_in">float</span>[,] heights = ReadHeightMapData(heightMapPath);</span><br><span class="line">    <span class="built_in">float</span>[,] compressedHeights = <span class="keyword">new</span> <span class="built_in">float</span>[compressResultSize, compressResultSize];</span><br><span class="line">    <span class="built_in">int</span> srcWsidth = heights.GetLength(<span class="number">0</span>);</span><br><span class="line">    <span class="built_in">int</span> dstHeight = heights.GetLength(<span class="number">1</span>);</span><br><span class="line">    <span class="comment">// resample the size of height map</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; compressResultSize; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; compressResultSize; j++) &#123;</span><br><span class="line">            <span class="built_in">float</span> sx = i * (<span class="built_in">float</span>)(srcWsidth - <span class="number">1</span>) / compressResultSize;</span><br><span class="line">            <span class="built_in">float</span> sy = j * (<span class="built_in">float</span>)(dstHeight - <span class="number">1</span>) / compressResultSize;</span><br><span class="line">            <span class="built_in">int</span> x0 = Mathf.FloorToInt(sx);</span><br><span class="line">            <span class="built_in">int</span> x1 = Mathf.Min(x0 + <span class="number">1</span>, srcWsidth - <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">int</span> y0 = Mathf.FloorToInt(sy);</span><br><span class="line">            <span class="built_in">int</span> y1 = Mathf.Min(y0 + <span class="number">1</span>, dstHeight - <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">float</span> q00 = heights[x0, y0];</span><br><span class="line">            <span class="built_in">float</span> q01 = heights[x0, y1];</span><br><span class="line">            <span class="built_in">float</span> q10 = heights[x1, y0];</span><br><span class="line">            <span class="built_in">float</span> q11 = heights[x1, y1];</span><br><span class="line">            <span class="built_in">float</span> rx0 = Mathf.Lerp(q00, q10, sx - x0);</span><br><span class="line">            <span class="built_in">float</span> rx1 = Mathf.Lerp(q01, q11, sx - x0);</span><br><span class="line">            <span class="comment">// caculate the height by the data given</span></span><br><span class="line">            <span class="built_in">float</span> h = Mathf.Lerp(rx0, rx1, sy - y0);</span><br><span class="line">            <span class="built_in">float</span> fixed_h = Mathf.Clamp(h, <span class="number">0</span>, <span class="number">50</span>);</span><br><span class="line">            compressedHeights[i, j] = fixed_h;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> compressedHeights;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>到指定的高度图文件的加载路径，读取所有TIF文件，然后写入数据到序列化文件中，以下是关键部分的代码（考虑到代码量，其他部分代码&#x2F;参数未放到下方，请读者自行添加）</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> (FileStream fs = <span class="keyword">new</span> FileStream(outputFile, FileMode.CreateNew, FileAccess.Write)) &#123;</span><br><span class="line">    <span class="keyword">using</span> (BinaryWriter writer = <span class="keyword">new</span> BinaryWriter(fs)) &#123;</span><br><span class="line">        <span class="comment">// file header : fileNum, single fileSize  // Int32</span></span><br><span class="line">        writer.Write(inputFilePaths.Length);</span><br><span class="line">        writer.Write(size);</span><br><span class="line">        <span class="keyword">foreach</span> (<span class="keyword">var</span> inputFilePath <span class="keyword">in</span> inputFilePaths) &#123;</span><br><span class="line">            <span class="built_in">string</span> fixedFilePath = AssetsUtility.GetInstance().FixFilePath(inputFilePath);</span><br><span class="line">            <span class="comment">// get tif file info from the name, such as &quot;n33_e110_1arc_v3&quot;</span></span><br><span class="line">            <span class="built_in">string</span> inputFileName = Path.GetFileName(fixedFilePath);</span><br><span class="line">           </span><br><span class="line">            <span class="comment">// get height data and write to file</span></span><br><span class="line">            <span class="built_in">float</span>[,] heightMap = CompressHeightData(fixedFilePath);</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; size; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; size; j++) &#123;</span><br><span class="line">                    writer.Write(heightMap[i, j]);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>从USGS下载的TIF文件都遵循着：n{纬度}_e{经度}的命名格式。我们在序列化文件数据时，也按照这个格式读取TIF文件的经纬度信息写入文件当中，后续用作识别地块信息。以下是关键代码部分：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span>[] heightMapPaths = Directory.GetFiles(heightMapInputPath, <span class="string">&quot;*.tif&quot;</span>, SearchOption.AllDirectories);</span><br><span class="line"><span class="built_in">string</span> inputFileName = Path.GetFileName(fixedFilePath);</span><br><span class="line"><span class="comment">// read the tif file, get longitude and latitude, write to this output file</span></span><br><span class="line">Match matchLatitude = Regex.Match(tifFileInfo[<span class="number">0</span>], <span class="string">@&quot;^[a-zA-Z]+(\d+)$&quot;</span>);</span><br><span class="line"><span class="built_in">int</span> latitude = <span class="built_in">int</span>.Parse(matchLatitude.Groups[<span class="number">1</span>].Value);</span><br><span class="line">Match matchLongitude = Regex.Match(tifFileInfo[<span class="number">1</span>], <span class="string">@&quot;^[a-zA-Z]+(\d+)$&quot;</span>);</span><br><span class="line"><span class="built_in">int</span> longitude = <span class="built_in">int</span>.Parse(matchLongitude.Groups[<span class="number">1</span>].Value);</span><br><span class="line">writer.Write(latitude);</span><br><span class="line">writer.Write(longitude);</span><br></pre></td></tr></table></figure>
-
-<p>最终执行上面的方法，你可以自己定义编辑器窗口使用序列化功能。也可以在Odin编辑器中写一个对应的处理窗口，这里结合之前的编辑器搭建工作，写了个高度图编辑器，界面如下（由于Odin布局代码并不好看，此处不放上编辑器类的源码）：</p>
-<figure>
-    <img src="images/Chapter02/HeightEditor.png" width="700" height="392" alt="image">
-    <figcaption>图：高度图编辑器</figcaption>
-</figure>
- 
-
-<p>点击上方的序列化高度图，在导出位置生成了序列化后的高度图文件：<br>（注：Odin部分的代码并不好看，此处仍然不放上，读者可自行通过Odin的API添加上导出与导入按钮的逻辑，上述的编辑器面板也仅是为了方便测试，重点在于序列化的逻辑）</p>
- <figure>
-    <img src="images/Chapter02/HeightData_Serialized.png" width="700" height="320" alt="image">
-    <img src="images/Chapter02/HeightData_Serialized02.png" width="700" height="50" alt="image">
-    <figcaption>图：序列化后的高度图文件</figcaption>
-</figure>
- 
-
-<p>由于在序列化过程中进行了数据压缩，同时序列化后的文件剔除了TIF文件的多余信息，所以序列化后文件大小显著降低，从原来的十几个25MB的TIF文件压缩为一个23MB的文件，更适合用于存储高度数据。后续可以根据实际游戏开发需要，选取合适的分辨率进行生成</p>
-<h2 id="1-3-高度图的反序列化"><a href="#1-3-高度图的反序列化" class="headerlink" title="1.3.高度图的反序列化"></a>1.3.高度图的反序列化</h2><p>上面的过程完成了高度图数据的预处理，现在我们已经可以在磁盘中读取到高度图文件。但高度信息最终还是需要加载进入内存，才能在Runtime中用于构建地形。</p>
-<p>本节实现高度数据的反序列化</p>
-<p>首先，为方便Runtime下的高度数据表示，我们需要先建立数据类用于存储高度图信息，该类中需要有的关键字段有：<br>-该高度数据对应的TIF文件（之前提到过从UGUS下载的文件都遵循n{纬度}_e{经度}的命名格式，所以记录 经纬度 数据即可）<br>-高度数据，float的列表（如对性能有要求，可压缩数据精度，改用更小的类型）<br>-高度数据大小，即size</p>
-<p>以下是该数据类的字段部分代码：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">SerializeField</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">HeightData</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">int</span> longitude;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">int</span> latitude;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">int</span> size;</span><br><span class="line">    [<span class="meta">SerializeField</span>] List&lt;<span class="built_in">float</span>&gt; heightDatas;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>同样的，因为一个序列化后的文件对应多个TIF文件，也就是对应多个现实地理的地块，上面的一个HeightData仅对应一个地块，所以我们还需要在外层再添加一层数据组织类，用于管理HeightData，该类需要有以下字段：<br>-该数据类存储了多少个TIF文件数据<br>-单个TIF文件数据的大小<br>-HeightData的列表（因为该类用于管理HeightData）</p>
-<p>以下是该类的字段部分代码：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">HeightDataModel</span> : <span class="title">ScriptableObject</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">int</span> heightFileNums;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">int</span> singleHeightFileSize;</span><br><span class="line">[<span class="meta">SerializeField</span>] List&lt;HeightData&gt; heightDataList;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>HeightDataModel继承了SO是为了直接存储在磁盘里，更方便在Unity Editor中使用，后续也可以在Runtime中加载这个SO。当然也可以直接加载之前的序列化文件获取高度数据，<br>不过在Editor下更麻烦些。最终我们建立起来的数据对应关系是一个HeightDataModel包含多个HeightData。<br>建立完Runtime下的高度数据模型后，开始写反序列化逻辑，关键代码如下：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> (FileStream fs = <span class="keyword">new</span> FileStream(fileRelativePath, FileMode.Open, FileAccess.Read)) &#123;</span><br><span class="line">    <span class="keyword">using</span> (BinaryReader reader = <span class="keyword">new</span> BinaryReader(fs)) &#123;</span><br><span class="line">        <span class="built_in">int</span> fileNum = reader.ReadInt32();</span><br><span class="line">        <span class="built_in">int</span> singleFileWidth = reader.ReadInt32();</span><br><span class="line">        Debug.Log(<span class="string">$&quot;header info, num of files : <span class="subst">&#123;fileNum&#125;</span>, single file size : <span class="subst">&#123;singleFileWidth&#125;</span>&quot;</span>);</span><br><span class="line"></span><br><span class="line">        HeightDataModel heightDataModel = ScriptableObject.CreateInstance&lt;HeightDataModel&gt;();</span><br><span class="line">        heightDataModel.InitHeightModel(fileNum, singleFileWidth);</span><br><span class="line">        DateTime dateTime = DateTime.Now;</span><br><span class="line">        <span class="built_in">string</span> modelName = <span class="built_in">string</span>.Format(<span class="string">&quot;HeightModel_&#123;0&#125;files_&#123;1&#125;.asset&quot;</span>, fileNum, dateTime.Ticks);</span><br><span class="line">        heightDataModel.name = modelName;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; fileNum; i++) &#123;</span><br><span class="line">            <span class="built_in">int</span> latitude = reader.ReadInt32();</span><br><span class="line">            <span class="built_in">int</span> longitude = reader.ReadInt32();</span><br><span class="line">            <span class="built_in">float</span>[,] heightDatas = <span class="keyword">new</span> <span class="built_in">float</span>[singleFileWidth, singleFileWidth];</span><br><span class="line">            <span class="comment">// read the height data then add to the heightDataModel</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> q = <span class="number">0</span>; q &lt; singleFileWidth; q++) &#123;</span><br><span class="line">                <span class="keyword">for</span>(<span class="built_in">int</span> p  = <span class="number">0</span>; p &lt; singleFileWidth;  p++) &#123;</span><br><span class="line">                    heightDatas[q, p] = reader.ReadSingle();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            Debug.Log(<span class="string">$&quot;now add a height data n<span class="subst">&#123;latitude&#125;</span>, e<span class="subst">&#123;longitude&#125;</span>, file width <span class="subst">&#123;singleFileWidth&#125;</span>&quot;</span>);</span><br><span class="line">            heightDataModel.AddHeightData(longitude, latitude, singleFileWidth, heightDatas);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">string</span> assetFullPath = AssetsUtility.GetInstance().GetCombinedPath(deserlOutputFilePath, modelName);</span><br><span class="line">        AssetDatabase.CreateAsset(heightDataModel, assetFullPath);</span><br><span class="line">        AssetDatabase.SaveAssets();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>为了填补上述代码的部分方法空缺，还需要在HeightDataModel与HeightData中添加如下代码逻辑：</p>
-<p>在HeightDataModel中，添加初始化方法和加入HeightData类的方法：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">InitHeightModel</span>(<span class="params"><span class="built_in">int</span> heightFileNums, <span class="built_in">int</span> size</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.heightFileNums = heightFileNums;</span><br><span class="line">    <span class="keyword">this</span>.singleHeightFileSize = size;</span><br><span class="line">    heightDataList = <span class="keyword">new</span> List&lt;HeightData&gt;();</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">AddHeightData</span>(<span class="params"><span class="built_in">int</span> longitude, <span class="built_in">int</span> latitude, <span class="built_in">int</span> size, <span class="built_in">float</span>[,] heightDatas</span>)</span> &#123;</span><br><span class="line">    HeightData heightData = <span class="keyword">new</span> HeightData(longitude, latitude, size, heightDatas);</span><br><span class="line">    heightDataList.Add(heightData);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>HeightData中，传入float[]高度数据用于初始化，添加一个写入高度数据的方法：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">HeightData</span>(<span class="params"><span class="built_in">int</span> longitude, <span class="built_in">int</span> latitude, <span class="built_in">int</span> size, <span class="built_in">float</span>[,] heightDatas</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.longitude = longitude;</span><br><span class="line">    <span class="keyword">this</span>.latitude = latitude;</span><br><span class="line">    <span class="keyword">this</span>.size = size;</span><br><span class="line">    <span class="keyword">this</span>.heightDatas = <span class="keyword">new</span> List&lt;<span class="built_in">float</span>&gt;(size * size);</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; size; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; size; j++) &#123;</span><br><span class="line">            SetHeight(i, j, heightDatas[i, j]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">SetHeight</span>(<span class="params"><span class="built_in">int</span> i, <span class="built_in">int</span> j, <span class="built_in">float</span> height</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; <span class="number">0</span> || i &gt;= size || j &lt; <span class="number">0</span> || j &gt;= size) &#123;</span><br><span class="line">        Debug.LogError(<span class="string">$&quot;out of index, error index <span class="subst">&#123;i&#125;</span>, <span class="subst">&#123;j&#125;</span>, size is <span class="subst">&#123;size&#125;</span>&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">int</span> idx = i * size + j;</span><br><span class="line">    <span class="keyword">if</span> (idx &gt;= heightDatas.Count) &#123;</span><br><span class="line">        <span class="keyword">this</span>.heightDatas.Add(height);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.heightDatas[idx] = height;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>因为这里的HeightDataModel继承了ScriptableObject，同时持久化成为了Unity资产，所以在执行了反序列化逻辑后可以在文件浏览器中看到生成的HeightDataModel实例：</p>
-<p>自此我们已经建立起高度数据的组织形式，后面我们可以添加逻辑，将高度数据应用到地形实践上</p>
-<h1 id="2-应用高度图到地块"><a href="#2-应用高度图到地块" class="headerlink" title="2.应用高度图到地块"></a>2.应用高度图到地块</h1><p>我们的Terrain地图依然是一片平地，现在需要将已经组织好的高度图应用到Terrain上。但目前却有以下的问题：<br>-首先，Terrain地块的尺寸和高度图尺寸不一定一致，考虑到后续要做不同LOD的Terrain地块，基本不可能一一对应，应该如何为每个vertex采样高度？<br>-其次，TerrainCluster对应不同的TIF文件，怎么让不同的TIF文件对应到每个地块，并且保证它们连续？</p>
-<p>对于第一个问题，我们可以直接映射，获取到高度图尺寸与地形尺寸后，根据其宽高找到地形上的顶点在高度图上对应的数据</p>
-<p>对于第二个问题，先前提到，因为我们使用真实地理数据，所以TerrainCluster对应的TIF高度图文件都是有经纬度标注的，这也许可以作为构建每个Cluster的次序的信息。如果你使用其他途径得到的高度图数据，可以手动为每个高度图添加次序。</p>
-<figure>
-    <img src="images/Chapter02/DownloadFile_UGUS.png" width="700" height="392" alt="image">
-    <figcaption>图：UGUS上下载的TIF高度图均有指定格式：n{纬度}_e{经度}</figcaption>
-</figure>
-
-<p>了解上述的答案后，可以开始我们的工作了！</p>
-<h2 id="2-1-封装高度数据获取"><a href="#2-1-封装高度数据获取" class="headerlink" title="2.1.封装高度数据获取"></a>2.1.封装高度数据获取</h2><p>为了管理组织高度图数据，我们可以专门封装一个类进行高度数据采样的处理。这个类需要知道地形的尺寸，也需要知道高度图的尺寸，同时还应该持有高度图数据的引用。当拥有地形尺寸与高度图尺寸后，我们就可以根据比例映射获取到地形上某个点应该设置的高度。</p>
-<p>所以这个类的关键代码为：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">HeightDataManager</span></span><br><span class="line">&#123;</span><br><span class="line">    List&lt;HeightDataModel&gt; heightDataModels;</span><br><span class="line">    <span class="built_in">int</span> srcWidth;</span><br><span class="line">    <span class="built_in">int</span> srcHeight;</span><br><span class="line">    Vector3Int terrainClusterSize;</span><br><span class="line">    <span class="built_in">int</span> terrainClusterWidth;</span><br><span class="line"><span class="built_in">int</span> terrainClusterHeight;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>每当我们为TerrainCluster上的一个点确定高度时，只需要知道这个点相对于Cluster左下角的点的距离，还有该点所在地块的经纬度即可（来确定用哪个HeightDataModel里的数据）。</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">float</span> <span class="title">SampleFromHeightData</span>(<span class="params"><span class="built_in">int</span> longitude, <span class="built_in">int</span> latitude, Vector3 vertPos, Vector3 clusterStartPoint</span>)</span> &#123;</span><br><span class="line"></span><br><span class="line">    HeightData heightData = HeightDataModel.GetHeightData(longitude, latitude);</span><br><span class="line">    <span class="keyword">if</span> (heightData != <span class="literal">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// fixed the vert, because exist cluster offset!</span></span><br><span class="line">        vertPos.x -= clusterStartPoint.x;</span><br><span class="line">        vertPos.z -= clusterStartPoint.z;</span><br><span class="line">        <span class="comment">// resample the size of height map</span></span><br><span class="line">        <span class="built_in">float</span> sx = vertPos.x / terrainClusterWidth * srcWidth;</span><br><span class="line">        <span class="built_in">float</span> sy = vertPos.z / terrainClusterHeight * srcHeight;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">int</span> x0 = Mathf.FloorToInt(sx); <span class="comment">//Mathf.Clamp(, 0, srcWidth - 1);</span></span><br><span class="line">        <span class="built_in">int</span> x1 = x0 + <span class="number">1</span>; <span class="comment">// Mathf.Min(, srcWidth - 1);</span></span><br><span class="line">        <span class="built_in">int</span> y0 = Mathf.FloorToInt(sy); <span class="comment">// Mathf.Clamp(, 0, srcHeight - 1); ;</span></span><br><span class="line">        <span class="built_in">int</span> y1 = y0 + <span class="number">1</span>; <span class="comment">// Mathf.Min(, srcHeight - 1);</span></span><br><span class="line">        <span class="built_in">float</span> q00 = GetHeightVal(longitude, latitude, x0, y0, heightData);</span><br><span class="line">        <span class="built_in">float</span> q01 = GetHeightVal(longitude, latitude, x0, y1, heightData);</span><br><span class="line">        <span class="built_in">float</span> q10 = GetHeightVal(longitude, latitude, x1, y0, heightData);</span><br><span class="line">        <span class="built_in">float</span> q11 = GetHeightVal(longitude, latitude, x1, y1, heightData);</span><br><span class="line"></span><br><span class="line">        <span class="built_in">float</span> rx0 = Mathf.Lerp(q00, q10, sx - x0);</span><br><span class="line">        <span class="built_in">float</span> rx1 = Mathf.Lerp(q01, q11, sx - x0);</span><br><span class="line"></span><br><span class="line">        <span class="built_in">float</span> h = Mathf.Lerp(rx0, rx1, sy - y0) * terrainClusterSize.y;</span><br><span class="line">        <span class="built_in">float</span> fixed_h = Mathf.Clamp(h, <span class="number">0</span>, <span class="number">50</span>);</span><br><span class="line">        <span class="keyword">return</span> fixed_h;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>如果直接执行上面的代码，在地形规模大的时候会卡住很久，这是因为我们需要遍历每个顶点为其采样高度，同时又要去每个HeightDataModel下去找该顶点的Cluster的经纬度对应的TIF，所以执行效率会很低。可以使用缓存来减少消耗时间，只需要根据时间局部性原理记录最近采样的TIF文件然后获取到这个字段即可，可直接见源码，此处不记</p>
-<p>2.2.设置地块Mesh的高度</p>
-<p>设置地形上每个vertex的y值，只需要在Tile的生成Mesh的代码中添加下面这行代码即可</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">……</span><br><span class="line">Vector3 vert = <span class="keyword">new</span> Vector3(gridSize * i, <span class="number">0</span>, gridSize * j) + startPoint - offsetInMeshVert;</span><br><span class="line"><span class="built_in">float</span> height = heightDataManager.SampleFromHeightData(longitude, latitude, vert, clusterStartPoint);</span><br><span class="line">vert.y = height;</span><br><span class="line">……</span><br></pre></td></tr></table></figure>
-
-<p>至于HeightDataModel，可以采用单例或者直接传入Tile那一层来进行调用，如果使用单例：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Singleton</span>&lt;<span class="title">T</span>&gt; <span class="keyword">where</span> <span class="title">T</span> : <span class="keyword">class</span>, <span class="title">new</span>() &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> T instance;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> T <span class="title">GetInstance</span>()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (instance == <span class="literal">null</span>) &#123;</span><br><span class="line">            instance = <span class="keyword">new</span> T();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Singleton</span>()</span> &#123; &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>让HeightDataModel继承上面的类即可</p>
-<p>2.3.初步的地貌样式</p>
-<p>目前的地形还是一张平面图，是时候应用上我们之前构建的高度图数据了，让它有些高低起伏了。在执行完上面的结果之后会看到以下的地形白膜：</p>
-<figure>
-    <img src="images/Chapter02/Terrain_Result01.png" width="700" height="392" alt="image">
-    <figcaption>图：地形白膜</figcaption>
-</figure>
-
-
-<p>上面的地形中并未做任何着色操作，使用默认材质。同时因为我们生成了法线，所以也可以见到阴影。为了让目前的地形更好看些，可以使用Shader进行些美化。</p>
-<p>首先，在生成地形Mesh的时候，根据遍历到的每个顶点的y值（高度），决定该顶点的颜色，最后在shader中应用该颜色。</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Color <span class="title">GetColorByHeight</span>(<span class="params"><span class="built_in">float</span> height</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (height &lt; <span class="number">10f</span>)</span><br><span class="line">        <span class="keyword">return</span> lowLandColor; <span class="comment">// 低地</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (height &lt; <span class="number">15f</span>)</span><br><span class="line">        <span class="keyword">return</span> midLandColor; <span class="comment">// 中地</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (height &lt; <span class="number">23f</span>)</span><br><span class="line">        <span class="keyword">return</span> highLandColor; <span class="comment">// 高地</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (height &lt; <span class="number">30f</span>)</span><br><span class="line">        <span class="keyword">return</span> mountainColor; <span class="comment">// 山地</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> snowColor; <span class="comment">// 雪地</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>对应的Shader代码（因为直接采用顶点颜色为其着色，所以很简单）：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">SubShader</span><br><span class="line">&#123;</span><br><span class="line">    Tags &#123; <span class="string">&quot;RenderType&quot;</span>=<span class="string">&quot;Opaque&quot;</span> &#125;</span><br><span class="line">    </span><br><span class="line">    CGPROGRAM</span><br><span class="line">    <span class="meta">#<span class="keyword">pragma</span> surface surf Lambert</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> Input</span><br><span class="line">    &#123;</span><br><span class="line">        float2 uv_MainTex;</span><br><span class="line">        float3 worldPos;</span><br><span class="line">        float3 barycentric; <span class="comment">// 添加重心坐标信息</span></span><br><span class="line">        float4 color0 : COLOR; <span class="comment">// 顶点颜色信息</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span> <span class="title function_">surf</span> <span class="params">(Input IN, inout SurfaceOutput o)</span></span><br><span class="line">    &#123;</span><br><span class="line">        float3 vertexColor = IN.barycentric.x * IN.color0.rgb +</span><br><span class="line">                             IN.barycentric.y * IN.color0.rgb +</span><br><span class="line">                             IN.barycentric.z * IN.color0.rgb;</span><br><span class="line">        </span><br><span class="line">        o.Albedo = vertexColor;</span><br><span class="line">    &#125;</span><br><span class="line">    ENDCG</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>Shader可以生成材质，再通过代码或者直接到MeshRender那里挂接从而生成最终的地形。</p>
-<p>本篇日志是最基础的地形搭建，在完成了上述的操作后，使用之前生成的高度图数据，就可以在Editor中生成地形，看到以下有基本地貌的地形，这也就意味着我们迈出了重要的第一步了！</p>
-<figure>
-    <img src="images/Chapter02/Terrain_Result02.png" width="700" height="392" alt="image">
-    <figcaption>图：有基本地貌的地形</figcaption>
-</figure> 
-
-
-      
-    </div>
-
-  </div>
-
-  <div class="article-footer">
-    <div class="article-meta pull-left">
-
-    
-
-    
-
-    </div>
-
-    
-  </div>
-</article>
-
-
-
-  <article>
-
-  
-    
-    <h3 class="article-title"><a href="/2024/12/20/策略游戏地图制作-一-Terrain生成-上/"><span>策略游戏地图制作(一)_Terrain生成_上</span></a></h3>
+    <h3 class="article-title"><span>策略游戏地图制作(一)_Terrain生成_上</span></h3>
     
   
 
@@ -395,13 +235,16 @@
   </div>
 </article>
 
-
-
-
-<nav class="pagination">
   
-  
-</nav>
+
+
+
+
+
+
+
+
+
     </main>
 
     <footer class="site-footer">
