@@ -6,7 +6,7 @@
   <title>记录游戏开发历程</title>
 
   
-  <meta name="author" content="Nobody">
+  <meta name="author" content="huayuxingtguiyujing">
   
 
   
@@ -59,6 +59,141 @@
 
   
     
+    <h3 class="article-title"><a href="/2025/01/22/策略游戏地图制作-四-地貌制作-上/"><span>策略游戏地图制作(四)-地貌制作-上</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2025/01/22/策略游戏地图制作-四-地貌制作-上/" rel="bookmark">
+        <time class="entry-date published" datetime="2025-01-22T09:31:23.000Z">
+          2025-01-22
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h1 id="1-地貌制作概述"><a href="#1-地貌制作概述" class="headerlink" title="1.地貌制作概述"></a>1.地貌制作概述</h1><p>本节先以一些策略游戏里的地貌为例，解释它们的地图地貌，之后提出一个简单的地貌模型，以下是该地貌模型应用到地形上的预览</p>
+<figure>
+    <img src="images/Chapter04/ApplyToTerrainResult.png" width="700" height="392" alt="image">
+    <figcaption>图：让地形应用地貌图</figcaption>
+</figure>
+
+
+<h2 id="1-1-一些游戏中的地貌"><a href="#1-1-一些游戏中的地貌" class="headerlink" title="1.1.一些游戏中的地貌"></a>1.1.一些游戏中的地貌</h2><p>游戏《欧陆风云4》的地图相关资源暴露比较充分，在 Europa Universalis IV &#x2F; map 文件夹下存放了大量与游戏地图构建相关的纹理资产、地貌图集、区域划分等文件。</p>
+<p>在map\terrain文件中列出了所有的地形种类，所有地形都有对应的色彩表。常用的地形颜色有：平原（86 124 27），丘陵（0 86 6），海岸线（255 247 0），山脉（65 42 17），沼泽&#x2F;湿地（75 147 174），草原（200 214 107），沙漠（200 214 107）。</p>
+<p>这里采用的方式是地形以纯色对应，输出一张简单地貌图，即下图。在这张简单地貌图中已有大致的地貌样式，地图效果也勉强可以。但仅仅是简单的纯色图还是太单调了，可以使用更多的操作来提升地图效果。通常来讲有很多的做法，如叠加噪声让地表看起来起伏不平，叠加纹理贴图等。</p>
+<figure>
+    <img src="images/Chapter04/EU4_Terrain.png" width="700" height="392" alt="image">
+    <figcaption>图：地形图 Europa Universalis IV\map\terrain.bmp</figcaption>
+</figure>
+
+<p>下图是游戏地图里的秋季地貌，混合了地形纹理之后进行导出。可以从图中看出terrain.bmp即纯色地图的概貌，在纯色地图的基础上叠加地形纹理，再做colorgrading之类的操作即可得到下图。当然，按下图的精细度，仅有上面的步骤还是不行的，如果只考虑程序化生成，还需要叠加高度图、法线图等：</p>
+<figure>
+    <img src="images/Chapter04/EU4_AutumnLandform.png" width="700" height="392" alt="image">
+    <figcaption>图：秋季地貌 Europa Universalis IV\map\terrain\colormap_autumn.dds</figcaption>
+</figure>
+
+
+<p>下图是游戏地貌的图集资产，这些纹理会叠加到地形图上。地形底色如上方所说是纯色对应。使用纯色作为有很多好处，如做季节、天气变化效果时，可以根据一张额外的混合贴图修改地图底色，省去很多操作。</p>
+<figure>
+    <img src="images/Chapter04/EU4_LandformAltas.png" width="500" height="392" alt="image">
+    <figcaption>图：地貌混合图集</figcaption>
+</figure>
+
+<p>当然，上面只是对EU4游戏的简单分析，要做出完整的EU4地图效果，仅有上面的是远不够的。如果你对欧陆风云4的自定义地图感兴趣，可以看看以下的wiki：<br><a href = "https://www.eu4cn.com/wiki/%E5%9C%B0%E5%9B%BE%E4%BF%AE%E6%94%B9" target="_blank">https://www.eu4cn.com/wiki/%E5%9C%B0%E5%9B%BE%E4%BF%AE%E6%94%B9</a></p>
+<h2 id="1-2-游戏地貌简单建模"><a href="#1-2-游戏地貌简单建模" class="headerlink" title="1.2.游戏地貌简单建模"></a>1.2.游戏地貌简单建模</h2><p>如果只让美术&#x2F;地编人员制作地图，那么地图效果毫无疑问会十分棒，但为了地图制作流程化与规范化考虑，PCG是必不可少的（毕竟你也不想看到美术累死吧）。程序化生成地图的方案在许多游戏里必不可少，而每类游戏又会有不同的地图需求，程序化生成方案需要具体定制。</p>
+<p>继续以Paradox公司为例，P社有两种游戏引擎，Europa和Clausewitz（克劳塞维兹）。2000年的P社的第一款游戏欧陆风云1使用Europa引擎，2007年P社又推出了Clausewitz引擎，使用C++开发，目前支持DX11，该引擎以只用cpu0著称（祖宗之法不可变！）。P社引擎以构建3D视图的游戏大地图著称，适配其一直在开发的策略游戏。</p>
+<p>扯的有些远了，但总的来讲，做地貌时应依据需求决定组件的轻重，以下提供一个简单的地貌建模方法。我们可以考虑基于真实地理知识，为游戏中的地貌建模。通常来讲，地貌受三个因素影响：海拔，湿度，温度。而海拔主要通过温度来影响地貌，所以也可以说只有温度、湿度两个要素</p>
+<p>我们可以按照以下理念确定地形：<br>-温度越低的地方越偏冷色调，越高的地方偏暖色调；<br>-湿度越高的地方绿色越重，否则就越干旱，黄色更重；<br>-每种地形均是纯色，可以使用插值来丰富下表现；</p>
+<p>基于此，我们简单地根据温度、湿度做个地形颜色对应图，如图所示：</p>
+<figure>
+    <img src="images/Chapter04/SimpleLandformModel.png" width="500" height="392" alt="image">
+    <figcaption>图：简单地貌模型</figcaption>
+</figure>
+ 
+<p>一个地点的高度可以由高度图得出，湿度图、温度图可以由真实地理数据得出，或者手刷（通过绘图工具即可），使用时获取到数值即可，然后映射到地形纯色</p>
+<figure>
+    <img src="images/Chapter04/AHumidityMap.png" width="500" height="392" alt="image">
+    <figcaption>图：一张湿度图范例</figcaption>
+</figure>
+
+<p>上面的地貌模型参考了hex的地貌构建思想，链接为（这位大佬的其他博客也很不错）：<br><a href = "http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/" target="_blank">http://www-cs-students.stanford.edu/~amitp&#x2F;game-programming&#x2F;polygon-map-generation&#x2F;</a></p>
+<h2 id="1-3-简单地貌模型应用"><a href="#1-3-简单地貌模型应用" class="headerlink" title="1.3.简单地貌模型应用"></a>1.3.简单地貌模型应用</h2><p>以下实践上述提出的模型：</p>
+<p>建立湿度、温度-模型的映射关系（下方的颜色数组很混乱，读者可自行更改地形颜色）：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">LandformDataModel</span> &#123;</span><br><span class="line">        <span class="keyword">static</span> Color Snow = <span class="keyword">new</span> Color(<span class="number">248</span>, <span class="number">248</span>, <span class="number">248</span>);</span><br><span class="line">        <span class="keyword">static</span> Color Grass = <span class="keyword">new</span> Color(<span class="number">195</span>, <span class="number">211</span>, <span class="number">169</span>);</span><br><span class="line">        <span class="keyword">static</span> Color GreenLand = <span class="keyword">new</span> Color(<span class="number">116</span>, <span class="number">182</span>, <span class="number">88</span>);</span><br><span class="line">        <span class="keyword">static</span> Color DenceForest = <span class="keyword">new</span> Color(<span class="number">71</span>, <span class="number">160</span>, <span class="number">71</span>);</span><br><span class="line">        <span class="keyword">static</span> Color Forest = <span class="keyword">new</span> Color(<span class="number">155</span>, <span class="number">203</span>, <span class="number">149</span>);</span><br><span class="line">        <span class="keyword">static</span> Color Desert = <span class="keyword">new</span> Color(<span class="number">235</span>, <span class="number">220</span>, <span class="number">194</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// temperature - humidity : Color  dictionary</span></span><br><span class="line">        <span class="comment">// humidity : low - high</span></span><br><span class="line">        <span class="comment">// temp : low - high</span></span><br><span class="line">        <span class="keyword">static</span> List&lt;Color&gt; LandformModel = <span class="keyword">new</span> List&lt;Color&gt; &#123;</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">153</span>, <span class="number">153</span>, <span class="number">153</span>), <span class="keyword">new</span> Color(<span class="number">187</span>, <span class="number">187</span>, <span class="number">187</span>),<span class="keyword">new</span> Color(<span class="number">221</span>, <span class="number">221</span>, <span class="number">187</span>),</span><br><span class="line">            Snow, Snow, Snow,</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">187</span>, <span class="number">187</span>, <span class="number">187</span>), <span class="keyword">new</span> Color(<span class="number">220</span>, <span class="number">224</span>, <span class="number">195</span>), <span class="keyword">new</span> Color(<span class="number">196</span>, <span class="number">204</span>, <span class="number">187</span>),</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">196</span>, <span class="number">204</span>, <span class="number">187</span>), <span class="keyword">new</span> Color(<span class="number">204</span>, <span class="number">212</span>, <span class="number">187</span>),<span class="keyword">new</span> Color(<span class="number">204</span>, <span class="number">212</span>, <span class="number">187</span>),</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">220</span>, <span class="number">224</span>, <span class="number">195</span>), Grass, Grass,</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>), <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>),  <span class="keyword">new</span> Color(<span class="number">164</span>, <span class="number">196</span>, <span class="number">168</span>),</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">220</span>, <span class="number">224</span>, <span class="number">195</span>), Grass, <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>), </span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>), <span class="keyword">new</span> Color(<span class="number">156</span>, <span class="number">187</span>, <span class="number">169</span>), GreenLand,</span><br><span class="line">            Desert, Grass, <span class="keyword">new</span> Color(<span class="number">193</span>, <span class="number">208</span>, <span class="number">174</span>),<span class="keyword">new</span> Color(<span class="number">156</span>, <span class="number">187</span>, <span class="number">169</span>), GreenLand, GreenLand, </span><br><span class="line">            Desert, <span class="keyword">new</span> Color(<span class="number">192</span>, <span class="number">214</span>, <span class="number">158</span>), Forest, Forest,  DenceForest, DenceForest </span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Color <span class="title">SampleColor</span>(<span class="params"><span class="built_in">float</span> humidity, <span class="built_in">float</span> temperature</span>)</span> &#123;</span><br><span class="line">            <span class="built_in">float</span> HLevel = GetHumidityLevel(humidity);</span><br><span class="line">            <span class="built_in">float</span> TLevel = GetTemperatureLevel(temperature);</span><br><span class="line"></span><br><span class="line">            <span class="built_in">int</span> HLevel_l = Mathf.Clamp((<span class="built_in">int</span>)HLevel, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line">            <span class="built_in">int</span> HLevel_r = Mathf.Clamp(HLevel_l + <span class="number">1</span>, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">            <span class="built_in">int</span> TLevel_l = Mathf.Clamp((<span class="built_in">int</span>)TLevel, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line">            <span class="built_in">int</span> TLevel_r = Mathf.Clamp(TLevel_l + <span class="number">1</span>, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">            <span class="built_in">float</span> HRatio = HLevel - HLevel_l;</span><br><span class="line">            <span class="built_in">float</span> TRatio = TLevel - TLevel_l;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// bilinear caculate</span></span><br><span class="line">            Color leftUp = LandformModel[TLevel_l * <span class="number">6</span> + HLevel_l];</span><br><span class="line">            Color leftDown = LandformModel[TLevel_r * <span class="number">6</span> + HLevel_l];</span><br><span class="line">            Color rightUp = LandformModel[TLevel_l * <span class="number">6</span> + HLevel_r];</span><br><span class="line">            Color rightDown = LandformModel[TLevel_r * <span class="number">6</span> + HLevel_r];</span><br><span class="line"></span><br><span class="line">            Color color1 = Color.Lerp(leftUp, rightUp, HRatio);</span><br><span class="line">            Color color2 = Color.Lerp(leftDown, rightDown, HRatio);</span><br><span class="line">            Color color = Color.Lerp(color1, color2, TRatio);</span><br><span class="line">            color.r /= <span class="number">255.0f</span>;</span><br><span class="line">            color.g /= <span class="number">255.0f</span>;</span><br><span class="line">            color.b /= <span class="number">255.0f</span>;</span><br><span class="line">            <span class="keyword">return</span> color;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetHumidityLevel</span>(<span class="params"><span class="built_in">float</span> humidity</span>)</span> &#123;</span><br><span class="line">            <span class="comment">// level 1 : 0, level 6 : 100;</span></span><br><span class="line">            <span class="built_in">float</span> level1H = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">float</span> level6H = <span class="number">100</span>;</span><br><span class="line">            <span class="built_in">float</span> level = Mathf.Lerp(level1H, level6H, humidity / level6H);</span><br><span class="line">            <span class="keyword">return</span> level;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetTemperatureLevel</span>(<span class="params"><span class="built_in">float</span> temperature</span>)</span> &#123;</span><br><span class="line">            <span class="comment">// level 1 : 0, level 6 : 30</span></span><br><span class="line">            <span class="built_in">float</span> maxT = <span class="number">30</span>;</span><br><span class="line">            <span class="built_in">float</span> level1T = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">float</span> level6T = <span class="number">5</span>;</span><br><span class="line">            <span class="built_in">float</span> level = Mathf.Lerp(level1T, level6T, temperature / maxT);</span><br><span class="line">            <span class="keyword">return</span> level;</span><br><span class="line">        &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetHumidity</span>(<span class="params">Vector3 vertPos</span>)</span> &#123;</span><br><span class="line">        <span class="comment">// 使用湿度贴图进行采样</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetTemperature</span>(<span class="params">Vector3 vertPos</span>)</span> &#123;</span><br><span class="line">        <span class="comment">// 使用温度贴图进行采样</span></span><br><span class="line">&#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>导出地貌图：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> ExportFlipVertically = <span class="literal">true</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">int</span> ExportTexResolution = <span class="number">1024</span>;</span><br><span class="line"><span class="keyword">public</span> Texture2D curHandleTex;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">string</span> landformTexImportPath;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">string</span> curLandformTexPath;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">ExportLandFormTex</span>()</span> &#123;</span><br><span class="line">    HeightDataManager heightDataManager = <span class="keyword">new</span> HeightDataManager();</span><br><span class="line">    heightDataManager.InitHeightDataManager(heightDataModels, MapTerrainEnum.ClusterSize);</span><br><span class="line">    curHandleTex = <span class="keyword">new</span> Texture2D(ExportTexResolution, ExportTexResolution, TextureFormat.RGB24, <span class="literal">false</span>);</span><br><span class="line">    Color[] colors = curHandleTex.GetPixels();</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; ExportTexResolution; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; ExportTexResolution; j++) &#123;</span><br><span class="line">            Vector3 vertPos = <span class="keyword">new</span> Vector3(i, <span class="number">0</span>, j);</span><br><span class="line">            vertPos.y = heightDataManager.SampleFromHeightData(startLongitudeLatitude, vertPos);</span><br><span class="line">            <span class="built_in">int</span> idx = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">if</span> (ExportFlipVertically) &#123;</span><br><span class="line">                idx = j * ExportTexResolution + i;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                idx = i * ExportTexResolution + j;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">float</span> humidity = LandformDataModel.GetHumidity(vertPos);</span><br><span class="line">            <span class="built_in">float</span> temperature = LandformDataModel.GetTemperature(vertPos); </span><br><span class="line">            colors[idx] = GetColorByHeight(vertPos.y);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    curHandleTex.SetPixels(colors);</span><br><span class="line">    curHandleTex.Apply();</span><br><span class="line">    Debug.Log(<span class="built_in">string</span>.Format(<span class="string">&quot;successfully generate texture, resolution : &#123;0&#125;x&#123;0&#125;&quot;</span>, ExportTexResolution));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行上述的导出逻辑后，可以获得如下的地貌图：</p>
+<figure>
+    <img src="images/Chapter04/ExportedLandfomMap01.png" width="500" height="392" alt="image">
+    <figcaption>图：导出后的地貌图</figcaption>
+</figure>
+ 
+<p>如果需要自定义地形颜色，更改颜色后，又可以得到不一样的地貌图</p>
+ <figure>
+    <img src="images/Chapter04/ExportedLandfomMap02.png" width="500" height="392" alt="image">
+    <figcaption>图：修改地形颜色后的地貌图</figcaption>
+</figure>
+
+<p>将该地貌贴图应用于地形上（因为只是应用一张贴图，shader逻辑并不复杂，此处不放），效果图如下：</p>
+ <figure>
+    <img src="images/Chapter04/ApplyToTerrainResult.png" width="500" height="392" alt="image">
+    <figcaption>图：让地形应用地貌图</figcaption>
+</figure>
+
+ <figure>
+    <img src="images/Chapter04/ApplyToTerrainResult_Close.png" width="700" height="392" alt="image">
+    <figcaption>图：拉近后的效果</figcaption>
+</figure>
+
+
+<h1 id="2-混合纹理方案概述"><a href="#2-混合纹理方案概述" class="headerlink" title="2.混合纹理方案概述"></a>2.混合纹理方案概述</h1><p>本节不涉及项目内代码，简要讨论下混合纹理大地图的方案，它是经典的大世界地图解决方案，适合处理纹理量大时的地形。</p>
+<p>通常来讲，当我们需要混合多个地形纹理时，有如下的方案<br>-直接使用一张BlendTexture存储权重，例如BlendTexture四个通道RGBA各自存储对应的纹理图的权重值。是比较直观又简单的方法，支持四张纹理混合<br>-使用纹理的A通道存储权重，即为每张贴图多添加一个A通道存权重（透明度），叠加得到最终颜色</p>
+<p>上述的方案在地形纹理规模扩大的时候弊病会显得很严重，如果有n张纹理，就需要有n&#x2F;4张索引贴图，采样n+n&#x2F;4，如果算上法线则更加严重。所以目前的游戏制作主流方案会采用一张IndexTexture+纹理图集来减少采样次数，采样时先获取索引再去找到图集对应纹理（2次）。</p>
+<figure>
+    <img src="images/Chapter04/TextureArraySample.png" width="500" height="392" alt="image">
+    <figcaption>图：一张纹理图集</figcaption>
+</figure>
+
+
+<p>如果要实践该方案，那么这个方案需要：</p>
+<p>-4*4的纹理图集：对应16种地形<br>-indexTexture：RGBA四通道分别存储一种纹理的索引，对应blenderTexture<br>-blenderTexture：RGBA四通道存储纹理的混合权重值</p>
+<p>计算过程：<br><code>Color = TexArray[indexTex.R]*blendTex.R + TexArray[indexTex.G]*blendTexG + TexArray[indexTex.B]*blendTex.B + TexArray[indexTex.A]*blendTex.A</code></p>
+<p>目前没有代码，之后再来尝试该方案</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2025/01/10/策略游戏地图制作-三-地块LOD/"><span>策略游戏地图制作(三)-地块LOD</span></a></h3>
     
   
@@ -99,7 +234,7 @@
     <figcaption>图：四叉树中不同层级的地块</figcaption>
 </figure>
 
-<p>网上有许多四叉树方案的具体实现，例如：<br><a href = "http://www.cppblog.com/liangairan/articles/48705.html"></a><br><a href = "https://www.cnblogs.com/rainbow70626/p/5268770.html"></a></p>
+<p>网上有许多四叉树方案的具体实现，例如：<br><a href = "http://www.cppblog.com/liangairan/articles/48705.html" target="_blank">http://www.cppblog.com/liangairan/articles/48705.html</a><br><a href = "https://www.cnblogs.com/rainbow70626/p/5268770.html" target="_blank">https://www.cnblogs.com/rainbow70626/p/5268770.html</a></p>
 <h2 id="1-2-LOD-过渡"><a href="#1-2-LOD-过渡" class="headerlink" title="1.2.LOD 过渡"></a>1.2.LOD 过渡</h2><p>LOD过渡是处理不同LOD级别之间的过程，由于不同的LOD级别存在精度差别，会出现裂缝，要修补这类问题，通常有以下的解决方法：</p>
 <p>（1）.直接设置顶点位置；很简单粗暴的解决方案，但很多时候却意外地有效，尤其是在修补因Mesh而产生的接缝上，原理图如下。这种修复方式依然会在不同LOD层级之间留下可见的界限</p>
  <figure>
@@ -115,7 +250,7 @@
 </figure>
 
 
-<p>（3）.无缝过渡；采用一些网格变形算法可以实现不同LOD级别之间的无缝过渡，例如CDLOD，其实现链接：<br><a href = "https://github.com/fstrugar/CDLOD"></a></p>
+<p>（3）.无缝过渡；采用一些网格变形算法可以实现不同LOD级别之间的无缝过渡，例如CDLOD，其实现链接：<br><a href = "https://github.com/fstrugar/CDLOD" target="_blank">https://github.com/fstrugar/CDLOD</a></p>
 <figure>
     <img src="images/Chapter03/CDLOD_Img.png" width="600" height="350" alt="image">
     <figcaption>图：CDLOD的演示视频（太糊了）</figcaption>
@@ -123,8 +258,8 @@
 
 
 <h2 id="1-3-其他LOD相关技术"><a href="#1-3-其他LOD相关技术" class="headerlink" title="1.3.其他LOD相关技术"></a>1.3.其他LOD相关技术</h2><p>除了上面举例的一些方案外，也有许多被广泛应用的LOD方案，以下举例</p>
-<p>（1）.HLOD；HLOD在UE中有内置的支持，它适用于一些3A大世界游戏，基本思想是用一个网格代替多个网格，当距离足够远的时候合并静态网格，可以减少渲染的drawcall，还能节省内存<br>HLOD的介绍：<br><a href = "https://docs.google.com/document/d/1OPYDNpwGFpkBorZ3GCpL9Z4ck-6qRRD1tzelUQ0UvFc/edit?pli=1&tab=t.0#heading=h.kcsddwbeir6p"></a><br>UE的HLOD实现：<br><a href = "https://dev.epicgames.com/documentation/en-us/unreal-engine/hierarchical-level-of-detail-in-unreal-engine?application_version=5.4"></a></p>
-<p>（2）.Nanite；其实Nanite也算一个LOD方案，它以一个网格上的Cluster（簇）为单位进行LOD切换，所以切换时玩家不会感觉到明显的突兀。如何划分Cluster、如何修补Cluster之间接缝都是非常有意思的问题。<br>UE官方的视频：<br><a href = "https://www.youtube.com/watch?v=TMorJX3Nj6U&t=7978s"></a><br>感兴趣的也可以看看这个视频对Nanite的解读：<br><a href = "https://www.bilibili.com/video/BV1VV4y157Zb/"></a></p>
+<p>（1）.HLOD；HLOD在UE中有内置的支持，它适用于一些3A大世界游戏，基本思想是用一个网格代替多个网格，当距离足够远的时候合并静态网格，可以减少渲染的drawcall，还能节省内存<br>HLOD的介绍：<br><a href = "https://docs.google.com/document/d/1OPYDNpwGFpkBorZ3GCpL9Z4ck-6qRRD1tzelUQ0UvFc/edit" target="_blank">https://docs.google.com/document/d/1OPYDNpwGFpkBorZ3GCpL9Z4ck-6qRRD1tzelUQ0UvFc/edit</a><br>UE的HLOD实现：<br><a href = "https://dev.epicgames.com/documentation/en-us/unreal-engine/hierarchical-level-of-detail-in-unreal-engine" target="_blank">https://dev.epicgames.com/documentation/en-us/unreal-engine/hierarchical-level-of-detail-in-unreal-engine</a></p>
+<p>（2）.Nanite；其实Nanite也算一个LOD方案，它以一个网格上的Cluster（簇）为单位进行LOD切换，所以切换时玩家不会感觉到明显的突兀。如何划分Cluster、如何修补Cluster之间接缝都是非常有意思的问题。<br>UE官方的视频：<br><a href = "https://www.youtube.com/watch?v=TMorJX3Nj6U&t=7978s" target="_blank">https://www.youtube.com/watch?v=TMorJX3Nj6U&amp;t=7978s</a><br>感兴趣的也可以看看这个视频对Nanite的解读：<br><a href = "https://www.bilibili.com/video/BV1VV4y157Zb/" target="_blank">https://www.bilibili.com/video/BV1VV4y157Zb/</a></p>
 <figure>
     <img src="images/Chapter03/Nanite_Img.png" width="700" height="392" alt="image">
     <figcaption>图：Nanite划分簇</figcaption>
@@ -238,7 +373,7 @@
     <div class="entry">
       
         <h1 id="1-高度图处理"><a href="#1-高度图处理" class="headerlink" title="1.高度图处理"></a>1.高度图处理</h1><h2 id="1-1-高度图获取"><a href="#1-1-高度图获取" class="headerlink" title="1.1.高度图获取"></a>1.1.高度图获取</h2><p>高度图本质上是一个二维数组，或者一个灰度图，存储指定xy坐标下的高度信息。运行时对高度数据采样来得知一个vert应该应用的高度，从而生成地形。可以通过一些算法生成高度图（如噪声），但为还原真实地形地貌，此处直接使用真实地理高度图，后续添加对地图的编辑功能来做微调</p>
-<p>首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：<br><a href = "https://earthexplorer.usgs.gov/"></a></p>
+<p>首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：<br><a href = "https://earthexplorer.usgs.gov/" target="_blank">https://earthexplorer.usgs.gov/</a></p>
 <p>打开网页后，在地图上点选以选取范围，转到DataSets下选择要下载的对应项</p>
 <figure>
     <img src="images/Chapter02/Download_UGUS01.png" width="700" height="392" alt="image">
@@ -424,7 +559,7 @@
 
 <p>本系列的开发日志，记录本人制作一个适用于策略游戏开发的地图包，最终目的是开发一个即插即用的地图包，适用于实现策略游戏的地图构建。</p>
 <h1 id="1-编辑器界面搭建"><a href="#1-编辑器界面搭建" class="headerlink" title="1.编辑器界面搭建"></a>1.编辑器界面搭建</h1><p>在开始我们的地图开发之前，需要先做一些基建上的准备，比如编辑器。</p>
-<p>众所周知，Editor内的工作是面向开发人员的，更要求易用性，同时因为并非GamePlay向，对性能效率的要求往往会低些（可以堆垃圾代码了）。如果你认为直接在Runtime下生成地图内容更方便，也可以跳过本节。但考虑到地图开发是一个很漫长的过程，Editor的辅助也是很重要的，毕竟可视化界面一直是最直观的。<br>Odin编辑器是一个unity编辑器扩展，功能非常强大。本系列的地图开发过程中，使用odin编辑器做Unity内的地图编辑器。可以从Unity商店里的Odin编辑器中获取到资源：<br><a target="_blank" rel="noopener" href="https://assetstore.unity.com/packages/tools/utilities/odin-inspector-and-serializer-89041"></a></p>
+<p>众所周知，Editor内的工作是面向开发人员的，更要求易用性，同时因为并非GamePlay向，对性能效率的要求往往会低些（可以堆垃圾代码了）。如果你认为直接在Runtime下生成地图内容更方便，也可以跳过本节。但考虑到地图开发是一个很漫长的过程，Editor的辅助也是很重要的，毕竟可视化界面一直是最直观的。<br>Odin编辑器是一个unity编辑器扩展，功能非常强大。本系列的地图开发过程中，使用odin编辑器做Unity内的地图编辑器。可以从Unity商店里的Odin编辑器中获取到资源：<br><a href = "https://assetstore.unity.com/packages/tools/utilities/odin-inspector-and-serializer-89041" target="_blank">https://assetstore.unity.com/packages/tools/utilities/odin-inspector-and-serializer-89041</a></p>
 <p>以下对编辑器做个简单的封装。<br>继承OdinMenuEditorWindow，继承该类后可以创建编辑器窗口，具备分页效果（示意图可以在后面看到）</p>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 编辑器的 Root，用于初始化编辑器配置</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">RootMapEditor</span> : <span class="title">OdinMenuEditorWindow</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -455,7 +590,7 @@
 </figure>
 
 <p>看起来还挺完整的，那么第一步就成功迈出了</p>
-<p>如果你依然对Odin编辑器的其他部分感兴趣，可以看看以下的教程&#x2F;文档:<br><a target="_blank" rel="noopener" href="https://github.com/su9257/Odin-Inspector-Chinese-Tutorial"></a><br><a href=" https://odininspector.com/documentation"></a></p>
+<p>如果你依然对Odin编辑器的其他部分感兴趣，可以看看以下的教程&#x2F;文档:<br><a href = "https://github.com/su9257/Odin-Inspector-Chinese-Tutorial" target="_blank">https://github.com/su9257/Odin-Inspector-Chinese-Tutorial</a><br><a href = "https://odininspector.com/documentation" target="_blank">https://odininspector.com/documentation</a></p>
 <h1 id="2-Terrain数据组织"><a href="#2-Terrain数据组织" class="headerlink" title="2.Terrain数据组织"></a>2.Terrain数据组织</h1><p>在Unity中有内置的Terrain系统，它是Unity官方提供的一套地形系统，可以直接在Inspector中刷地形。支持URP和HDRP，源码在C++层中，意味着个人开发者无法定制Terrain的细节。与Mesh的渲染不同，Terrain新开了一个Pass去处理，做了很多优化与适配。Terrain在移动端的性能表现并不好，在移动端制作地形依然偏向使用Mesh的方案，Mesh是适用性更广的工作流，突出一个思想简单，所以此处会使用Mesh实现地形。</p>
 <figure>
     <img src="images/Chapter01/Unity_TerrainSystem.png" width="700" height="392" alt="image">
@@ -463,7 +598,7 @@
 </figure>
 
 
-<h2 id="2-1-地块分块处理"><a href="#2-1-地块分块处理" class="headerlink" title="2.1.地块分块处理"></a>2.1.地块分块处理</h2><h3 id="2-1-1-为什么要分块"><a href="#2-1-1-为什么要分块" class="headerlink" title="2.1.1.为什么要分块"></a>2.1.1.为什么要分块</h3><p>在大地图游戏中，对地图的分块处理是基操。在超大规模的地图离，通常将地图数据分为一个个Chunk，根据玩家的位置加载周围的Chunk。对地图分块，利于我们进行动态加载、剔除等操作，实现内存等方面的优化，更好管理地图数据。</p>
+<h2 id="2-1-地块分块处理"><a href="#2-1-地块分块处理" class="headerlink" title="2.1.地块分块处理"></a>2.1.地块分块处理</h2><h3 id="2-1-1-为什么要分块"><a href="#2-1-1-为什么要分块" class="headerlink" title="2.1.1.为什么要分块"></a>2.1.1.为什么要分块</h3><p>在大地图游戏中，对地图的分块处理是基操。在超大规模的地图里，通常将地图数据分为一个个Chunk，根据玩家的位置加载周围的Chunk。对地图分块，利于我们进行动态加载、剔除等操作，实现内存等方面的优化，更好管理地图数据。</p>
 <p>以《艾尔登法环》为例，法环的地图总面积约为100平方千米，游戏中划分的最小网格单元为256m×256m，也会有更大一些的比如1024m×1024m的网格划分，这样可以对游戏内地图的总体网格数进行适当性的控制，同时保持远景的加载质量。 </p>
 <figure>
     <img src="images/Chapter01/EldenRing_PPT.png" width="700" height="392" alt="image">
@@ -483,7 +618,8 @@
 
 
 <h2 id="2-2-建立地块类"><a href="#2-2-建立地块类" class="headerlink" title="2.2.建立地块类"></a>2.2.建立地块类</h2><p>在完成上述的地块数据建模之后，我们可以开始构建地形Mesh了，下面代码用于建立TerrainCluster，缺失的字段直接补充即可</p>
-<p>注：以下代码是较早的版本，查看最新版本代码请到：<br><a target="_blank" rel="noopener" href="https://github.com/huayuxingtguiyujing/WarGameMap"></a><br>注：建议直接跳过本节的TerrainCluster与TerrainTile构建，到下一节的地形Mesh构建</p>
+<p>注：以下代码是较早的版本，查看最新版本代码请到：<br><a href = "https://github.com/huayuxingtguiyujing/WarGameMap" target="_blank">https://github.com/huayuxingtguiyujing/WarGameMap</a></p>
+<p>注：建议直接跳过本节的TerrainCluster与TerrainTile构建，到下一节的地形Mesh构建</p>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">InitHeightCons</span>(<span class="params">Vector3Int terrainSize, Vector3Int clusterSize, <span class="built_in">int</span> tileSize, <span class="built_in">int</span> LODLevel, List&lt;HeightDataModel&gt; heightDataModels</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.terrainSize = terrainSize;</span><br><span class="line">    <span class="keyword">this</span>.clusterSize = clusterSize;</span><br><span class="line">    <span class="keyword">this</span>.tileSize = tileSize;</span><br><span class="line">    <span class="keyword">this</span>.LODLevel = LODLevel;</span><br><span class="line">    clusterWidth = terrainSize.x;</span><br><span class="line">    clusterHeight = terrainSize.z;</span><br><span class="line">    clusterList = <span class="keyword">new</span> TDList&lt;TerrainCluster&gt;(clusterWidth, clusterHeight);</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>;  i &lt; clusterHeight; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="built_in">int</span> j = <span class="number">0</span>;  j &lt; clusterWidth; j++) &#123;</span><br><span class="line">            GameObject clusterGo = CreateHeightCluster(i, j);</span><br><span class="line">            clusterList[i, j].InitTerrainCluster(……);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
@@ -513,7 +649,7 @@
 </figure>
 
 <h3 id="2-3-2-添加顶点"><a href="#2-3-2-添加顶点" class="headerlink" title="2.3.2.添加顶点"></a>2.3.2.添加顶点</h3><p>往MeshData中添加顶点和片元索引的方法。会根据一个外部的传入参数vertexIndex来决定要添加的顶点是Tile内的，还是在OutofMesh的，外部参数在后面的构建Mesh部分可见。三角型片元一样需要判断该片元是内部的还是外部的</p>
-<p>此处参考了一个开源的游戏地形构建方案，可以结合此链接学习：<br><a href = "https://github.com/SebLague/Procedural-Landmass-Generation"></a></p>
+<p>此处参考了一个开源的游戏地形构建方案，可以结合此链接学习：<br><a href = "https://github.com/SebLague/Procedural-Landmass-Generation" target="_blank">https://github.com/SebLague/Procedural-Landmass-Generation</a></p>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">AddVertex</span>(<span class="params">Vector3 vertexPosition, Vector2 uv, <span class="built_in">int</span> vertIndex</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (vertIndex &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        outofMeshVertexs[- vertIndex - <span class="number">1</span>] = vertexPosition;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        vertexs[vertIndex] = vertexPosition;</span><br><span class="line">        uvs[vertIndex] = uv;</span><br><span class="line">        normals[vertIndex] = <span class="keyword">new</span> Vector3(<span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">        colors[vertIndex] = GetColorByHeight(vertexPosition.y);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">AddTriangle</span>(<span class="params"><span class="built_in">int</span> a, <span class="built_in">int</span> b, <span class="built_in">int</span> c, <span class="built_in">int</span> i = <span class="number">0</span>, <span class="built_in">int</span> j = <span class="number">0</span></span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (a &lt; <span class="number">0</span> || b &lt; <span class="number">0</span> || c &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (outOfMeshTriangleIndex + <span class="number">1</span> &gt; outOfMeshTriangles.Length - <span class="number">1</span>) &#123;</span><br><span class="line">            Debug.LogError(<span class="built_in">string</span>.Format(<span class="string">&quot;triangle idx : &#123;0&#125;, &#123;1&#125; !&quot;</span>, i, j));</span><br><span class="line">            Debug.LogError(<span class="built_in">string</span>.Format(<span class="string">&quot;out of bound! cur idx : &#123;0&#125;, cur a : &#123;1&#125;, cur b : &#123;2&#125;, cur c : &#123;3&#125;, length : &#123;4&#125;&quot;</span>, outOfMeshTriangleIndex, a, b, c, outOfMeshTriangles.Length));</span><br><span class="line">        &#125;</span><br><span class="line">        outOfMeshTriangles[outOfMeshTriangleIndex] = a;</span><br><span class="line">        outOfMeshTriangles[outOfMeshTriangleIndex + <span class="number">1</span>] = b;</span><br><span class="line">        outOfMeshTriangles[outOfMeshTriangleIndex + <span class="number">2</span>] = c;</span><br><span class="line">        outOfMeshTriangleIndex += <span class="number">3</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        triangles[triangleIndex] = a;</span><br><span class="line">        triangles[triangleIndex + <span class="number">1</span>] = b;</span><br><span class="line">        triangles[triangleIndex + <span class="number">2</span>] = c;</span><br><span class="line">        triangleIndex += <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
@@ -523,7 +659,7 @@
 
 
 
-<h3 id="2-3-4-计算法线"><a href="#2-3-4-计算法线" class="headerlink" title="2.3.4.计算法线"></a>2.3.4.计算法线</h3><p>先前一直在强调，要记录OutOfMesh即Tile地块外部的，这一操作就是为了正确地计算法线，计算法线的代码如下：<br>此处代码源自（伟大的作者！）：<br><a href = "https://github.com/SebLague/Procedural-Landmass-Generation/blob/master/Proc%20Gen%20E21/Assets/Scripts/MeshGenerator.cs"></a></p>
+<h3 id="2-3-4-计算法线"><a href="#2-3-4-计算法线" class="headerlink" title="2.3.4.计算法线"></a>2.3.4.计算法线</h3><p>先前一直在强调，要记录OutOfMesh即Tile地块外部的，这一操作就是为了正确地计算法线，计算法线的代码如下：<br>此处代码源自（伟大的作者！）：<br><a href = "https://github.com/SebLague/Procedural-Landmass-Generation/blob/master/Proc%20Gen%20E21/Assets/Scripts/MeshGenerator.cs" target="_blank">https://github.com/SebLague/Procedural-Landmass-Generation/blob/master/Proc%20Gen%20E21/Assets/Scripts/MeshGenerator.cs</a></p>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">RecaculateNormal</span>()</span> &#123;</span><br><span class="line">    <span class="built_in">int</span> triangleCount = triangles.Length / <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; triangleCount; i++) &#123;</span><br><span class="line">        <span class="built_in">int</span> normalTriangleIndex = i * <span class="number">3</span>;</span><br><span class="line">        <span class="built_in">int</span> vertexIndexA = triangles[normalTriangleIndex];</span><br><span class="line">        <span class="built_in">int</span> vertexIndexB = triangles[normalTriangleIndex + <span class="number">1</span>];</span><br><span class="line">        <span class="built_in">int</span> vertexIndexC = triangles[normalTriangleIndex + <span class="number">2</span>];</span><br><span class="line">        Vector3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);</span><br><span class="line">        <span class="comment">//Vector3 triangleNormal = SurfaceNormalFromIndices_Fixed(vertexIndexA, vertexIndexB, vertexIndexC);</span></span><br><span class="line">        normals[vertexIndexA] += triangleNormal;</span><br><span class="line">        normals[vertexIndexB] += triangleNormal;</span><br><span class="line">        normals[vertexIndexC] += triangleNormal;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// border triangle, caculate their value to normal</span></span><br><span class="line">    <span class="built_in">int</span> borderTriangleCount = outOfMeshTriangles.Length / <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; borderTriangleCount; i++) &#123;</span><br><span class="line">        <span class="built_in">int</span> normalTriangleIndex = i * <span class="number">3</span>;</span><br><span class="line">        <span class="built_in">int</span> vertexIndexA = outOfMeshTriangles[normalTriangleIndex];</span><br><span class="line">        <span class="built_in">int</span> vertexIndexB = outOfMeshTriangles[normalTriangleIndex + <span class="number">1</span>];</span><br><span class="line">        <span class="built_in">int</span> vertexIndexC = outOfMeshTriangles[normalTriangleIndex + <span class="number">2</span>];</span><br><span class="line">        Vector3 triangleNormal = SurfaceNormalFromIndices(vertexIndexA, vertexIndexB, vertexIndexC);</span><br><span class="line">        <span class="comment">//Vector3 triangleNormal = SurfaceNormalFromIndices_Fixed(vertexIndexA, vertexIndexB, vertexIndexC);</span></span><br><span class="line">        <span class="keyword">if</span> (vertexIndexA &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            normals[vertexIndexA] += triangleNormal;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (vertexIndexB &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            normals[vertexIndexB] += triangleNormal;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (vertexIndexC &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            normals[vertexIndexC] += triangleNormal;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; normals.Length; i++) &#123;</span><br><span class="line">        normals[i].Normalize();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>在联通了TerrainCluster与TerrainTile的执行逻辑后，通过odin编辑器或者其他途径生成每个Tile的Mesh，此处的编辑器代码暂不提供，因为关键的逻辑已经写完，如何调用这些方法都是次要的了； </p>
@@ -564,8 +700,8 @@
 
     <footer class="site-footer">
   <p class="site-info">
-    My GitHub : <a href="https://github.com/huayuxingtguiyujing" target="_blank">huayuxingtguiyujing</a> and
-    Use theme <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    希望哪天能做完我的游戏， Github : <a href="https://github.com/huayuxingtguiyujing/" target="_blank">huayuxingtguiyujing</a> and
+    Theme : <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
     </br>
     
     &copy; 2025 huayuxingtguiyujing

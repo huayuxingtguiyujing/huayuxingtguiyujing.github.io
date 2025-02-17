@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>策略游戏地图制作(四)-地貌制作-上 | 记录游戏开发历程</title>
+
+  
+  <meta name="author" content="huayuxingtguiyujing">
+  
+
+  
+  <meta name="description" content="1.地貌制作概述本节先以一些策略游戏里的地貌为例，解释它们的地图地貌，之后提出一个简单的地貌模型，以下是该地貌模型应用到地形上的预览
+
+    
+    图：让地形应用地貌图
+
+
+
+1.1.一些游戏中的地貌游戏《欧陆风云4》的地图相关资源暴露比较充分，在 Europa Universalis IV ">
+  
+
+  
+  
+  <meta name="keywords" content="">
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta property="og:title" content="策略游戏地图制作(四)-地貌制作-上"/>
+
+  <meta property="og:site_name" content="记录游戏开发历程"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="记录游戏开发历程" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">记录游戏开发历程</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    <article>
+
+  
+    
+    <h3 class="article-title"><span>策略游戏地图制作(四)-地貌制作-上</span></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2025/01/22/策略游戏地图制作-四-地貌制作-上/" rel="bookmark">
+        <time class="entry-date published" datetime="2025-01-22T09:31:23.000Z">
+          2025-01-22
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h1 id="1-地貌制作概述"><a href="#1-地貌制作概述" class="headerlink" title="1.地貌制作概述"></a>1.地貌制作概述</h1><p>本节先以一些策略游戏里的地貌为例，解释它们的地图地貌，之后提出一个简单的地貌模型，以下是该地貌模型应用到地形上的预览</p>
+<figure>
+    <img src="images/Chapter04/ApplyToTerrainResult.png" width="700" height="392" alt="image">
+    <figcaption>图：让地形应用地貌图</figcaption>
+</figure>
+
+
+<h2 id="1-1-一些游戏中的地貌"><a href="#1-1-一些游戏中的地貌" class="headerlink" title="1.1.一些游戏中的地貌"></a>1.1.一些游戏中的地貌</h2><p>游戏《欧陆风云4》的地图相关资源暴露比较充分，在 Europa Universalis IV &#x2F; map 文件夹下存放了大量与游戏地图构建相关的纹理资产、地貌图集、区域划分等文件。</p>
+<p>在map\terrain文件中列出了所有的地形种类，所有地形都有对应的色彩表。常用的地形颜色有：平原（86 124 27），丘陵（0 86 6），海岸线（255 247 0），山脉（65 42 17），沼泽&#x2F;湿地（75 147 174），草原（200 214 107），沙漠（200 214 107）。</p>
+<p>这里采用的方式是地形以纯色对应，输出一张简单地貌图，即下图。在这张简单地貌图中已有大致的地貌样式，地图效果也勉强可以。但仅仅是简单的纯色图还是太单调了，可以使用更多的操作来提升地图效果。通常来讲有很多的做法，如叠加噪声让地表看起来起伏不平，叠加纹理贴图等。</p>
+<figure>
+    <img src="images/Chapter04/EU4_Terrain.png" width="700" height="392" alt="image">
+    <figcaption>图：地形图 Europa Universalis IV\map\terrain.bmp</figcaption>
+</figure>
+
+<p>下图是游戏地图里的秋季地貌，混合了地形纹理之后进行导出。可以从图中看出terrain.bmp即纯色地图的概貌，在纯色地图的基础上叠加地形纹理，再做colorgrading之类的操作即可得到下图。当然，按下图的精细度，仅有上面的步骤还是不行的，如果只考虑程序化生成，还需要叠加高度图、法线图等：</p>
+<figure>
+    <img src="images/Chapter04/EU4_AutumnLandform.png" width="700" height="392" alt="image">
+    <figcaption>图：秋季地貌 Europa Universalis IV\map\terrain\colormap_autumn.dds</figcaption>
+</figure>
+
+
+<p>下图是游戏地貌的图集资产，这些纹理会叠加到地形图上。地形底色如上方所说是纯色对应。使用纯色作为有很多好处，如做季节、天气变化效果时，可以根据一张额外的混合贴图修改地图底色，省去很多操作。</p>
+<figure>
+    <img src="images/Chapter04/EU4_LandformAltas.png" width="500" height="392" alt="image">
+    <figcaption>图：地貌混合图集</figcaption>
+</figure>
+
+<p>当然，上面只是对EU4游戏的简单分析，要做出完整的EU4地图效果，仅有上面的是远不够的。如果你对欧陆风云4的自定义地图感兴趣，可以看看以下的wiki：<br><a href = "https://www.eu4cn.com/wiki/%E5%9C%B0%E5%9B%BE%E4%BF%AE%E6%94%B9" target="_blank">https://www.eu4cn.com/wiki/%E5%9C%B0%E5%9B%BE%E4%BF%AE%E6%94%B9</a></p>
+<h2 id="1-2-游戏地貌简单建模"><a href="#1-2-游戏地貌简单建模" class="headerlink" title="1.2.游戏地貌简单建模"></a>1.2.游戏地貌简单建模</h2><p>如果只让美术&#x2F;地编人员制作地图，那么地图效果毫无疑问会十分棒，但为了地图制作流程化与规范化考虑，PCG是必不可少的（毕竟你也不想看到美术累死吧）。程序化生成地图的方案在许多游戏里必不可少，而每类游戏又会有不同的地图需求，程序化生成方案需要具体定制。</p>
+<p>继续以Paradox公司为例，P社有两种游戏引擎，Europa和Clausewitz（克劳塞维兹）。2000年的P社的第一款游戏欧陆风云1使用Europa引擎，2007年P社又推出了Clausewitz引擎，使用C++开发，目前支持DX11，该引擎以只用cpu0著称（祖宗之法不可变！）。P社引擎以构建3D视图的游戏大地图著称，适配其一直在开发的策略游戏。</p>
+<p>扯的有些远了，但总的来讲，做地貌时应依据需求决定组件的轻重，以下提供一个简单的地貌建模方法。我们可以考虑基于真实地理知识，为游戏中的地貌建模。通常来讲，地貌受三个因素影响：海拔，湿度，温度。而海拔主要通过温度来影响地貌，所以也可以说只有温度、湿度两个要素</p>
+<p>我们可以按照以下理念确定地形：<br>-温度越低的地方越偏冷色调，越高的地方偏暖色调；<br>-湿度越高的地方绿色越重，否则就越干旱，黄色更重；<br>-每种地形均是纯色，可以使用插值来丰富下表现；</p>
+<p>基于此，我们简单地根据温度、湿度做个地形颜色对应图，如图所示：</p>
+<figure>
+    <img src="images/Chapter04/SimpleLandformModel.png" width="500" height="392" alt="image">
+    <figcaption>图：简单地貌模型</figcaption>
+</figure>
+ 
+<p>一个地点的高度可以由高度图得出，湿度图、温度图可以由真实地理数据得出，或者手刷（通过绘图工具即可），使用时获取到数值即可，然后映射到地形纯色</p>
+<figure>
+    <img src="images/Chapter04/AHumidityMap.png" width="500" height="392" alt="image">
+    <figcaption>图：一张湿度图范例</figcaption>
+</figure>
+
+<p>上面的地貌模型参考了hex的地貌构建思想，链接为（这位大佬的其他博客也很不错）：<br><a href = "http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/" target="_blank">http://www-cs-students.stanford.edu/~amitp&#x2F;game-programming&#x2F;polygon-map-generation&#x2F;</a></p>
+<h2 id="1-3-简单地貌模型应用"><a href="#1-3-简单地貌模型应用" class="headerlink" title="1.3.简单地貌模型应用"></a>1.3.简单地貌模型应用</h2><p>以下实践上述提出的模型：</p>
+<p>建立湿度、温度-模型的映射关系（下方的颜色数组很混乱，读者可自行更改地形颜色）：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">LandformDataModel</span> &#123;</span><br><span class="line">        <span class="keyword">static</span> Color Snow = <span class="keyword">new</span> Color(<span class="number">248</span>, <span class="number">248</span>, <span class="number">248</span>);</span><br><span class="line">        <span class="keyword">static</span> Color Grass = <span class="keyword">new</span> Color(<span class="number">195</span>, <span class="number">211</span>, <span class="number">169</span>);</span><br><span class="line">        <span class="keyword">static</span> Color GreenLand = <span class="keyword">new</span> Color(<span class="number">116</span>, <span class="number">182</span>, <span class="number">88</span>);</span><br><span class="line">        <span class="keyword">static</span> Color DenceForest = <span class="keyword">new</span> Color(<span class="number">71</span>, <span class="number">160</span>, <span class="number">71</span>);</span><br><span class="line">        <span class="keyword">static</span> Color Forest = <span class="keyword">new</span> Color(<span class="number">155</span>, <span class="number">203</span>, <span class="number">149</span>);</span><br><span class="line">        <span class="keyword">static</span> Color Desert = <span class="keyword">new</span> Color(<span class="number">235</span>, <span class="number">220</span>, <span class="number">194</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// temperature - humidity : Color  dictionary</span></span><br><span class="line">        <span class="comment">// humidity : low - high</span></span><br><span class="line">        <span class="comment">// temp : low - high</span></span><br><span class="line">        <span class="keyword">static</span> List&lt;Color&gt; LandformModel = <span class="keyword">new</span> List&lt;Color&gt; &#123;</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">153</span>, <span class="number">153</span>, <span class="number">153</span>), <span class="keyword">new</span> Color(<span class="number">187</span>, <span class="number">187</span>, <span class="number">187</span>),<span class="keyword">new</span> Color(<span class="number">221</span>, <span class="number">221</span>, <span class="number">187</span>),</span><br><span class="line">            Snow, Snow, Snow,</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">187</span>, <span class="number">187</span>, <span class="number">187</span>), <span class="keyword">new</span> Color(<span class="number">220</span>, <span class="number">224</span>, <span class="number">195</span>), <span class="keyword">new</span> Color(<span class="number">196</span>, <span class="number">204</span>, <span class="number">187</span>),</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">196</span>, <span class="number">204</span>, <span class="number">187</span>), <span class="keyword">new</span> Color(<span class="number">204</span>, <span class="number">212</span>, <span class="number">187</span>),<span class="keyword">new</span> Color(<span class="number">204</span>, <span class="number">212</span>, <span class="number">187</span>),</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">220</span>, <span class="number">224</span>, <span class="number">195</span>), Grass, Grass,</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>), <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>),  <span class="keyword">new</span> Color(<span class="number">164</span>, <span class="number">196</span>, <span class="number">168</span>),</span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">220</span>, <span class="number">224</span>, <span class="number">195</span>), Grass, <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>), </span><br><span class="line">            <span class="keyword">new</span> Color(<span class="number">180</span>, <span class="number">201</span>, <span class="number">169</span>), <span class="keyword">new</span> Color(<span class="number">156</span>, <span class="number">187</span>, <span class="number">169</span>), GreenLand,</span><br><span class="line">            Desert, Grass, <span class="keyword">new</span> Color(<span class="number">193</span>, <span class="number">208</span>, <span class="number">174</span>),<span class="keyword">new</span> Color(<span class="number">156</span>, <span class="number">187</span>, <span class="number">169</span>), GreenLand, GreenLand, </span><br><span class="line">            Desert, <span class="keyword">new</span> Color(<span class="number">192</span>, <span class="number">214</span>, <span class="number">158</span>), Forest, Forest,  DenceForest, DenceForest </span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Color <span class="title">SampleColor</span>(<span class="params"><span class="built_in">float</span> humidity, <span class="built_in">float</span> temperature</span>)</span> &#123;</span><br><span class="line">            <span class="built_in">float</span> HLevel = GetHumidityLevel(humidity);</span><br><span class="line">            <span class="built_in">float</span> TLevel = GetTemperatureLevel(temperature);</span><br><span class="line"></span><br><span class="line">            <span class="built_in">int</span> HLevel_l = Mathf.Clamp((<span class="built_in">int</span>)HLevel, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line">            <span class="built_in">int</span> HLevel_r = Mathf.Clamp(HLevel_l + <span class="number">1</span>, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">            <span class="built_in">int</span> TLevel_l = Mathf.Clamp((<span class="built_in">int</span>)TLevel, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line">            <span class="built_in">int</span> TLevel_r = Mathf.Clamp(TLevel_l + <span class="number">1</span>, <span class="number">0</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">            <span class="built_in">float</span> HRatio = HLevel - HLevel_l;</span><br><span class="line">            <span class="built_in">float</span> TRatio = TLevel - TLevel_l;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// bilinear caculate</span></span><br><span class="line">            Color leftUp = LandformModel[TLevel_l * <span class="number">6</span> + HLevel_l];</span><br><span class="line">            Color leftDown = LandformModel[TLevel_r * <span class="number">6</span> + HLevel_l];</span><br><span class="line">            Color rightUp = LandformModel[TLevel_l * <span class="number">6</span> + HLevel_r];</span><br><span class="line">            Color rightDown = LandformModel[TLevel_r * <span class="number">6</span> + HLevel_r];</span><br><span class="line"></span><br><span class="line">            Color color1 = Color.Lerp(leftUp, rightUp, HRatio);</span><br><span class="line">            Color color2 = Color.Lerp(leftDown, rightDown, HRatio);</span><br><span class="line">            Color color = Color.Lerp(color1, color2, TRatio);</span><br><span class="line">            color.r /= <span class="number">255.0f</span>;</span><br><span class="line">            color.g /= <span class="number">255.0f</span>;</span><br><span class="line">            color.b /= <span class="number">255.0f</span>;</span><br><span class="line">            <span class="keyword">return</span> color;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetHumidityLevel</span>(<span class="params"><span class="built_in">float</span> humidity</span>)</span> &#123;</span><br><span class="line">            <span class="comment">// level 1 : 0, level 6 : 100;</span></span><br><span class="line">            <span class="built_in">float</span> level1H = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">float</span> level6H = <span class="number">100</span>;</span><br><span class="line">            <span class="built_in">float</span> level = Mathf.Lerp(level1H, level6H, humidity / level6H);</span><br><span class="line">            <span class="keyword">return</span> level;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetTemperatureLevel</span>(<span class="params"><span class="built_in">float</span> temperature</span>)</span> &#123;</span><br><span class="line">            <span class="comment">// level 1 : 0, level 6 : 30</span></span><br><span class="line">            <span class="built_in">float</span> maxT = <span class="number">30</span>;</span><br><span class="line">            <span class="built_in">float</span> level1T = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">float</span> level6T = <span class="number">5</span>;</span><br><span class="line">            <span class="built_in">float</span> level = Mathf.Lerp(level1T, level6T, temperature / maxT);</span><br><span class="line">            <span class="keyword">return</span> level;</span><br><span class="line">        &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetHumidity</span>(<span class="params">Vector3 vertPos</span>)</span> &#123;</span><br><span class="line">        <span class="comment">// 使用湿度贴图进行采样</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> <span class="title">GetTemperature</span>(<span class="params">Vector3 vertPos</span>)</span> &#123;</span><br><span class="line">        <span class="comment">// 使用温度贴图进行采样</span></span><br><span class="line">&#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>导出地貌图：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> ExportFlipVertically = <span class="literal">true</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">int</span> ExportTexResolution = <span class="number">1024</span>;</span><br><span class="line"><span class="keyword">public</span> Texture2D curHandleTex;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">string</span> landformTexImportPath;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">string</span> curLandformTexPath;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">ExportLandFormTex</span>()</span> &#123;</span><br><span class="line">    HeightDataManager heightDataManager = <span class="keyword">new</span> HeightDataManager();</span><br><span class="line">    heightDataManager.InitHeightDataManager(heightDataModels, MapTerrainEnum.ClusterSize);</span><br><span class="line">    curHandleTex = <span class="keyword">new</span> Texture2D(ExportTexResolution, ExportTexResolution, TextureFormat.RGB24, <span class="literal">false</span>);</span><br><span class="line">    Color[] colors = curHandleTex.GetPixels();</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; ExportTexResolution; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; ExportTexResolution; j++) &#123;</span><br><span class="line">            Vector3 vertPos = <span class="keyword">new</span> Vector3(i, <span class="number">0</span>, j);</span><br><span class="line">            vertPos.y = heightDataManager.SampleFromHeightData(startLongitudeLatitude, vertPos);</span><br><span class="line">            <span class="built_in">int</span> idx = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">if</span> (ExportFlipVertically) &#123;</span><br><span class="line">                idx = j * ExportTexResolution + i;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                idx = i * ExportTexResolution + j;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">float</span> humidity = LandformDataModel.GetHumidity(vertPos);</span><br><span class="line">            <span class="built_in">float</span> temperature = LandformDataModel.GetTemperature(vertPos); </span><br><span class="line">            colors[idx] = GetColorByHeight(vertPos.y);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    curHandleTex.SetPixels(colors);</span><br><span class="line">    curHandleTex.Apply();</span><br><span class="line">    Debug.Log(<span class="built_in">string</span>.Format(<span class="string">&quot;successfully generate texture, resolution : &#123;0&#125;x&#123;0&#125;&quot;</span>, ExportTexResolution));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行上述的导出逻辑后，可以获得如下的地貌图：</p>
+<figure>
+    <img src="images/Chapter04/ExportedLandfomMap01.png" width="500" height="392" alt="image">
+    <figcaption>图：导出后的地貌图</figcaption>
+</figure>
+ 
+<p>如果需要自定义地形颜色，更改颜色后，又可以得到不一样的地貌图</p>
+ <figure>
+    <img src="images/Chapter04/ExportedLandfomMap02.png" width="500" height="392" alt="image">
+    <figcaption>图：修改地形颜色后的地貌图</figcaption>
+</figure>
+
+<p>将该地貌贴图应用于地形上（因为只是应用一张贴图，shader逻辑并不复杂，此处不放），效果图如下：</p>
+ <figure>
+    <img src="images/Chapter04/ApplyToTerrainResult.png" width="500" height="392" alt="image">
+    <figcaption>图：让地形应用地貌图</figcaption>
+</figure>
+
+ <figure>
+    <img src="images/Chapter04/ApplyToTerrainResult_Close.png" width="700" height="392" alt="image">
+    <figcaption>图：拉近后的效果</figcaption>
+</figure>
+
+
+<h1 id="2-混合纹理方案概述"><a href="#2-混合纹理方案概述" class="headerlink" title="2.混合纹理方案概述"></a>2.混合纹理方案概述</h1><p>本节不涉及项目内代码，简要讨论下混合纹理大地图的方案，它是经典的大世界地图解决方案，适合处理纹理量大时的地形。</p>
+<p>通常来讲，当我们需要混合多个地形纹理时，有如下的方案<br>-直接使用一张BlendTexture存储权重，例如BlendTexture四个通道RGBA各自存储对应的纹理图的权重值。是比较直观又简单的方法，支持四张纹理混合<br>-使用纹理的A通道存储权重，即为每张贴图多添加一个A通道存权重（透明度），叠加得到最终颜色</p>
+<p>上述的方案在地形纹理规模扩大的时候弊病会显得很严重，如果有n张纹理，就需要有n&#x2F;4张索引贴图，采样n+n&#x2F;4，如果算上法线则更加严重。所以目前的游戏制作主流方案会采用一张IndexTexture+纹理图集来减少采样次数，采样时先获取索引再去找到图集对应纹理（2次）。</p>
+<figure>
+    <img src="images/Chapter04/TextureArraySample.png" width="500" height="392" alt="image">
+    <figcaption>图：一张纹理图集</figcaption>
+</figure>
+
+
+<p>如果要实践该方案，那么这个方案需要：</p>
+<p>-4*4的纹理图集：对应16种地形<br>-indexTexture：RGBA四通道分别存储一种纹理的索引，对应blenderTexture<br>-blenderTexture：RGBA四通道存储纹理的混合权重值</p>
+<p>计算过程：<br><code>Color = TexArray[indexTex.R]*blendTex.R + TexArray[indexTex.G]*blendTexG + TexArray[indexTex.B]*blendTex.B + TexArray[indexTex.A]*blendTex.A</code></p>
+<p>目前没有代码，之后再来尝试该方案</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+  
+
+
+
+
+
+
+
+
+
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    希望哪天能做完我的游戏， Github : <a href="https://github.com/huayuxingtguiyujing/" target="_blank">huayuxingtguiyujing</a> and
+    Theme : <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    </br>
+    
+    &copy; 2025 huayuxingtguiyujing
+    
+  </p>
+</footer>
+    
+    
+  </div>
+</div>
+</body>
+</html>

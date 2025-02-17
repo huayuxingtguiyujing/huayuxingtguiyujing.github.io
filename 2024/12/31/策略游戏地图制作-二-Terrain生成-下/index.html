@@ -6,7 +6,7 @@
   <title>策略游戏地图制作(二)_Terrain生成_下 | 记录游戏开发历程</title>
 
   
-  <meta name="author" content="Nobody">
+  <meta name="author" content="huayuxingtguiyujing">
   
 
   
@@ -85,7 +85,7 @@
     <div class="entry">
       
         <h1 id="1-高度图处理"><a href="#1-高度图处理" class="headerlink" title="1.高度图处理"></a>1.高度图处理</h1><h2 id="1-1-高度图获取"><a href="#1-1-高度图获取" class="headerlink" title="1.1.高度图获取"></a>1.1.高度图获取</h2><p>高度图本质上是一个二维数组，或者一个灰度图，存储指定xy坐标下的高度信息。运行时对高度数据采样来得知一个vert应该应用的高度，从而生成地形。可以通过一些算法生成高度图（如噪声），但为还原真实地形地貌，此处直接使用真实地理高度图，后续添加对地图的编辑功能来做微调</p>
-<p>首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：<br><a href = "https://earthexplorer.usgs.gov/"></a></p>
+<p>首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：<br><a href = "https://earthexplorer.usgs.gov/" target="_blank">https://earthexplorer.usgs.gov/</a></p>
 <p>打开网页后，在地图上点选以选取范围，转到DataSets下选择要下载的对应项</p>
 <figure>
     <img src="images/Chapter02/Download_UGUS01.png" width="700" height="392" alt="image">
@@ -240,11 +240,11 @@
 
     <footer class="site-footer">
   <p class="site-info">
-    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
-    Theme by <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
+    希望哪天能做完我的游戏， Github : <a href="https://github.com/huayuxingtguiyujing/" target="_blank">huayuxingtguiyujing</a> and
+    Theme : <a href="https://github.com/CodeDaraW/Hacker" target="_blank">Hacker</a>
     </br>
     
-    &copy; 2025 Nobody
+    &copy; 2025 huayuxingtguiyujing
     
   </p>
 </footer>
