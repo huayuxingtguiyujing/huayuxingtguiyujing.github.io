@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>策略游戏地图制作(一)_Terrain生成_上 | 记录游戏开发历程</title>
+  <title>策略游戏地图制作(一)-Terrain生成-上 | 只羊的博客 | 记录游戏开发历程</title>
 
   
   <meta name="author" content="huayuxingtguiyujing">
@@ -19,23 +19,23 @@
 
   
   
-  <meta name="keywords" content="">
+  <meta name="keywords" content="地形系统">
   
 
   <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <meta property="og:title" content="策略游戏地图制作(一)_Terrain生成_上"/>
+  <meta property="og:title" content="策略游戏地图制作(一)-Terrain生成-上"/>
 
-  <meta property="og:site_name" content="记录游戏开发历程"/>
+  <meta property="og:site_name" content="只羊的博客"/>
 
   
   <meta property="og:image" content="/favicon.ico"/>
   
 
   <link href="/favicon.ico" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="记录游戏开发历程" type="application/atom+xml">
+  <link rel="alternate" href="/atom.xml" title="只羊的博客" type="application/atom+xml">
   <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
 <meta name="generator" content="Hexo 7.3.0"></head>
 
@@ -47,16 +47,20 @@
     <header>
   <div class="site-branding">
     <h1 class="site-title">
-      <a href="/">记录游戏开发历程</a>
+      <a href="/">只羊的博客</a>
     </h1>
-    <p class="site-description"></p>
+    <p class="site-description">记录游戏开发历程</p>
   </div>
   <nav class="site-navigation">
     <ul>
       
-        <li><a href="/">Home</a></li>
+        <li><a href="/">主页</a></li>
       
-        <li><a href="/archives">Archives</a></li>
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+        <li><a href="/links">链接</a></li>
       
     </ul>
   </nav>
@@ -67,7 +71,7 @@
 
   
     
-    <h3 class="article-title"><span>策略游戏地图制作(一)_Terrain生成_上</span></h3>
+    <h3 class="article-title"><span>策略游戏地图制作(一)-Terrain生成-上</span></h3>
     
   
 
@@ -90,17 +94,19 @@
         <p>一个策略游戏中最重要的部分就是它的地图，地图包含游戏中重要的战略信息，玩家的几乎所有操作都需要与地图的交互进行。而且，身为策略游戏玩家，表现效果丰富的策略地图，也能很好地满足大家指点江山、统筹全局（机枪往前移五米）的愿望。</p>
 <p>以下举例一些策略游戏内的地图</p>
 <figure>
-    <img src="images/Chapter01/EU4_ScreenShot.jpg" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/EU4_ScreenShot.jpg" width="700" height="392" alt="image">
     <figcaption>图：《欧陆风云4》游戏地图</figcaption>
 </figure>
 
+<span id="more"></span>
+
 <figure>
-    <img src="images/Chapter01/CV6_ScreenShot.jpg" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/CV6_ScreenShot.jpg" width="700" height="392" alt="image">
     <figcaption>图：《文明6》游戏地图</figcaption>
 </figure>
 
 <figure>
-    <img src="images/Chapter01/TotalWar_ScreenShot.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/TotalWar_ScreenShot.png" width="700" height="392" alt="image">
     <figcaption>图：《全战三国》游戏地图</figcaption>
 </figure>
 
@@ -132,7 +138,7 @@
 
 <p>添加上各种功能后的编辑器效果，如下图所示（下图是填充了部分内容的，如果你没有在Window内添加内容，那么依然会显示一片空白）。</p>
 <figure>
-    <img src="images/Chapter01/Editor_Full.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/Editor_Full.png" width="700" height="392" alt="image">
     <figcaption>图：填充内容后的MapEditor</figcaption>
 </figure>
 
@@ -140,7 +146,7 @@
 <p>如果你依然对Odin编辑器的其他部分感兴趣，可以看看以下的教程&#x2F;文档:<br><a href = "https://github.com/su9257/Odin-Inspector-Chinese-Tutorial" target="_blank">https://github.com/su9257/Odin-Inspector-Chinese-Tutorial</a><br><a href = "https://odininspector.com/documentation" target="_blank">https://odininspector.com/documentation</a></p>
 <h1 id="2-Terrain数据组织"><a href="#2-Terrain数据组织" class="headerlink" title="2.Terrain数据组织"></a>2.Terrain数据组织</h1><p>在Unity中有内置的Terrain系统，它是Unity官方提供的一套地形系统，可以直接在Inspector中刷地形。支持URP和HDRP，源码在C++层中，意味着个人开发者无法定制Terrain的细节。与Mesh的渲染不同，Terrain新开了一个Pass去处理，做了很多优化与适配。Terrain在移动端的性能表现并不好，在移动端制作地形依然偏向使用Mesh的方案，Mesh是适用性更广的工作流，突出一个思想简单，所以此处会使用Mesh实现地形。</p>
 <figure>
-    <img src="images/Chapter01/Unity_TerrainSystem.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/Unity_TerrainSystem.png" width="700" height="392" alt="image">
     <figcaption>图：使用Unity内置的Terrain系统</figcaption>
 </figure>
 
@@ -148,14 +154,14 @@
 <h2 id="2-1-地块分块处理"><a href="#2-1-地块分块处理" class="headerlink" title="2.1.地块分块处理"></a>2.1.地块分块处理</h2><h3 id="2-1-1-为什么要分块"><a href="#2-1-1-为什么要分块" class="headerlink" title="2.1.1.为什么要分块"></a>2.1.1.为什么要分块</h3><p>在大地图游戏中，对地图的分块处理是基操。在超大规模的地图里，通常将地图数据分为一个个Chunk，根据玩家的位置加载周围的Chunk。对地图分块，利于我们进行动态加载、剔除等操作，实现内存等方面的优化，更好管理地图数据。</p>
 <p>以《艾尔登法环》为例，法环的地图总面积约为100平方千米，游戏中划分的最小网格单元为256m×256m，也会有更大一些的比如1024m×1024m的网格划分，这样可以对游戏内地图的总体网格数进行适当性的控制，同时保持远景的加载质量。 </p>
 <figure>
-    <img src="images/Chapter01/EldenRing_PPT.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/EldenRing_PPT.png" width="700" height="392" alt="image">
     <figcaption>图：《艾尔登法环》在2022年GDC中的汇报</figcaption>
 </figure>
  
 <p>而在策略游戏中，因为策略游戏一般是2.5D制作，地图往往是平面的，相比法环之类的大制作，在地图上考虑的东西要更少些，比如不需要考虑纵深结构。</p>
 <p>我们在此简单地将地图块，划分成两层：世界地形会由多个Cluster组成，一个Cluster内置多个Tile，如下图所示：</p>
 <figure>
-    <img src="images/Chapter01/TerrainDivide_Model.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/TerrainDivide_Model.png" width="700" height="392" alt="image">
     <figcaption>图：地形分块的简单模型</figcaption>
 </figure>
 
@@ -191,7 +197,7 @@
 <p>所以MeshData包含了上述字段，而值得注意的是这里使用了outofMeshVertexs数组来记录地形Mesh外的数据，这是因为每个地块边缘的顶点都需要额外地计算外面一层的片元，否则边缘顶点的法线计算会出现问题（因为只计算了本地块的三角型对法线的贡献），不同地块的的衔接处会出现明显的界限。</p>
 <p>如下图所示，边缘虚线的顶点存储在outofMeshVertex中，不会用于构建Tile地块，也会存储额外的边缘三角型信息</p>
 <figure>
-    <img src="images/Chapter01/MoreVert_BuildMesh.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/MoreVert_BuildMesh.png" width="700" height="392" alt="image">
     <figcaption>图：存储额外的顶点用于构建Mesh</figcaption>
 </figure>
 
@@ -212,7 +218,7 @@
 <p>在联通了TerrainCluster与TerrainTile的执行逻辑后，通过odin编辑器或者其他途径生成每个Tile的Mesh，此处的编辑器代码暂不提供，因为关键的逻辑已经写完，如何调用这些方法都是次要的了； </p>
 <p>此时我们已经构建了一个基础地形，如果上述步骤全部通过，它在scene中会是这样的平面：</p>
 <figure>
-    <img src="images/Chapter01/Terrain_Result.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter01/Terrain_Result.png" width="700" height="392" alt="image">
     <figcaption>图：生成的地形Mesh</figcaption>
 </figure>
 
@@ -228,6 +234,13 @@
 
     
 
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/地形系统/">地形系统</a>
+    </span>
     
 
     </div>

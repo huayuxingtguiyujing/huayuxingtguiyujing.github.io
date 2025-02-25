@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>策略游戏地图制作(三)-地块LOD | 记录游戏开发历程</title>
+  <title>策略游戏地图制作(三)-地块LOD | 只羊的博客 | 记录游戏开发历程</title>
 
   
   <meta name="author" content="huayuxingtguiyujing">
@@ -16,12 +16,13 @@
     图：不同LOD级别的模型
 
 
-通常来讲我们可以预制不同LOD的M">
+通常来讲我们可以预制不同LOD的Mesh，程序启动时载入内存，然后去做动态切换。像UE可以对导入的模型自动生成不同LOD级别模型，这样做的代价是存储了更多模型Mesh，所以LOD也算一种空间换时间的做法。
+LOD不仅仅体现在渲染优化上，它更应该理解为一种思想。LOD在其他领域中也有应用，比如引擎的物理碰撞、动画更新、AI等都可以使用LOD的思想进行优化，许多游戏在做gameplay时也会考虑应用LOD">
   
 
   
   
-  <meta name="keywords" content="">
+  <meta name="keywords" content="地形系统 LOD">
   
 
   <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
@@ -30,14 +31,14 @@
 
   <meta property="og:title" content="策略游戏地图制作(三)-地块LOD"/>
 
-  <meta property="og:site_name" content="记录游戏开发历程"/>
+  <meta property="og:site_name" content="只羊的博客"/>
 
   
   <meta property="og:image" content="/favicon.ico"/>
   
 
   <link href="/favicon.ico" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="记录游戏开发历程" type="application/atom+xml">
+  <link rel="alternate" href="/atom.xml" title="只羊的博客" type="application/atom+xml">
   <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
 <meta name="generator" content="Hexo 7.3.0"></head>
 
@@ -49,16 +50,20 @@
     <header>
   <div class="site-branding">
     <h1 class="site-title">
-      <a href="/">记录游戏开发历程</a>
+      <a href="/">只羊的博客</a>
     </h1>
-    <p class="site-description"></p>
+    <p class="site-description">记录游戏开发历程</p>
   </div>
   <nav class="site-navigation">
     <ul>
       
-        <li><a href="/">Home</a></li>
+        <li><a href="/">主页</a></li>
       
-        <li><a href="/archives">Archives</a></li>
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+        <li><a href="/links">链接</a></li>
       
     </ul>
   </nav>
@@ -91,21 +96,23 @@
       
         <h1 id="1-LOD技术概述"><a href="#1-LOD技术概述" class="headerlink" title="1.LOD技术概述"></a>1.LOD技术概述</h1><p>LOD（Level Of Detail）是游戏制作中的重要技术，它的思想很简单，即根据模型在屏幕的占比或直接根据摄像机到模型的距离决定该模型应该采用的精度级别，离的远采用更低精度，以降低渲染成本。</p>
 <figure>
-    <img src="images/Chapter03/Different_LOD_Models.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/Different_LOD_Models.png" width="700" height="392" alt="image">
     <figcaption>图：不同LOD级别的模型</figcaption>
 </figure>
 
 <p>通常来讲我们可以预制不同LOD的Mesh，程序启动时载入内存，然后去做动态切换。像UE可以对导入的模型自动生成不同LOD级别模型，这样做的代价是存储了更多模型Mesh，所以LOD也算一种空间换时间的做法。</p>
 <p>LOD不仅仅体现在渲染优化上，它更应该理解为一种思想。LOD在其他领域中也有应用，比如引擎的物理碰撞、动画更新、AI等都可以使用LOD的思想进行优化，许多游戏在做gameplay时也会考虑应用LOD</p>
+<span id="more"></span>
+
 <h2 id="1-1-LOD-选取"><a href="#1-1-LOD-选取" class="headerlink" title="1.1.LOD 选取"></a>1.1.LOD 选取</h2><p>LOD选取即确定一个模型应该采用的LOD级别，在Unity的LOD Group组件中，提供距离过渡和占屏幕比例的过渡方式，这是比较常用的方法</p>
 <figure>
-    <img src="images/Chapter03/Unity_LOD_Group.png" width="400" height="350" alt="image">
+    <img src="/images/Chapter03/Unity_LOD_Group.png" width="400" height="350" alt="image">
     <figcaption>图：Unity的LOD Group（虽然它更像是个玩具）</figcaption>
 </figure>
 
 <p>一些游戏会采用更复杂的LOD方案，比如采用四叉树，采用四叉树可以达到更精细的划分效果。</p>
 <figure>
-    <img src="images/Chapter03/QuadTree_Tile.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/QuadTree_Tile.png" width="700" height="392" alt="image">
     <figcaption>图：四叉树中不同层级的地块</figcaption>
 </figure>
 
@@ -113,21 +120,21 @@
 <h2 id="1-2-LOD-过渡"><a href="#1-2-LOD-过渡" class="headerlink" title="1.2.LOD 过渡"></a>1.2.LOD 过渡</h2><p>LOD过渡是处理不同LOD级别之间的过程，由于不同的LOD级别存在精度差别，会出现裂缝，要修补这类问题，通常有以下的解决方法：</p>
 <p>（1）.直接设置顶点位置；很简单粗暴的解决方案，但很多时候却意外地有效，尤其是在修补因Mesh而产生的接缝上，原理图如下。这种修复方式依然会在不同LOD层级之间留下可见的界限</p>
  <figure>
-    <img src="images/Chapter03/SetVertPos_FixSeam.png" width="600" height="330" alt="image">
+    <img src="/images/Chapter03/SetVertPos_FixSeam.png" width="600" height="330" alt="image">
     <figcaption>图：直接设置顶点位置来修补接缝</figcaption>
 </figure>
 
 
 <p>（2）.采用特殊的过渡地带；如用精细的三角型组成条带，但这样做也在每个层级间都留下明显的分界线。</p>
 <figure>
-    <img src="images/Chapter03/SetTransitPart_FixSeam.png" width="600" height="330" alt="image">
+    <img src="/images/Chapter03/SetTransitPart_FixSeam.png" width="600" height="330" alt="image">
     <figcaption>图：采用特殊的过渡地带修补接缝</figcaption>
 </figure>
 
 
 <p>（3）.无缝过渡；采用一些网格变形算法可以实现不同LOD级别之间的无缝过渡，例如CDLOD，其实现链接：<br><a href = "https://github.com/fstrugar/CDLOD" target="_blank">https://github.com/fstrugar/CDLOD</a></p>
 <figure>
-    <img src="images/Chapter03/CDLOD_Img.png" width="600" height="350" alt="image">
+    <img src="/images/Chapter03/CDLOD_Img.png" width="600" height="350" alt="image">
     <figcaption>图：CDLOD的演示视频（太糊了）</figcaption>
 </figure>
 
@@ -136,7 +143,7 @@
 <p>（1）.HLOD；HLOD在UE中有内置的支持，它适用于一些3A大世界游戏，基本思想是用一个网格代替多个网格，当距离足够远的时候合并静态网格，可以减少渲染的drawcall，还能节省内存<br>HLOD的介绍：<br><a href = "https://docs.google.com/document/d/1OPYDNpwGFpkBorZ3GCpL9Z4ck-6qRRD1tzelUQ0UvFc/edit" target="_blank">https://docs.google.com/document/d/1OPYDNpwGFpkBorZ3GCpL9Z4ck-6qRRD1tzelUQ0UvFc/edit</a><br>UE的HLOD实现：<br><a href = "https://dev.epicgames.com/documentation/en-us/unreal-engine/hierarchical-level-of-detail-in-unreal-engine" target="_blank">https://dev.epicgames.com/documentation/en-us/unreal-engine/hierarchical-level-of-detail-in-unreal-engine</a></p>
 <p>（2）.Nanite；其实Nanite也算一个LOD方案，它以一个网格上的Cluster（簇）为单位进行LOD切换，所以切换时玩家不会感觉到明显的突兀。如何划分Cluster、如何修补Cluster之间接缝都是非常有意思的问题。<br>UE官方的视频：<br><a href = "https://www.youtube.com/watch?v=TMorJX3Nj6U&t=7978s" target="_blank">https://www.youtube.com/watch?v=TMorJX3Nj6U&amp;t=7978s</a><br>感兴趣的也可以看看这个视频对Nanite的解读：<br><a href = "https://www.bilibili.com/video/BV1VV4y157Zb/" target="_blank">https://www.bilibili.com/video/BV1VV4y157Zb/</a></p>
 <figure>
-    <img src="images/Chapter03/Nanite_Img.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/Nanite_Img.png" width="700" height="392" alt="image">
     <figcaption>图：Nanite划分簇</figcaption>
 </figure>
 
@@ -147,7 +154,7 @@
 <p>有以上思路后，可以确定做LOD的基本步骤：<br>1.为TerrainTile类添加生成不同LOD级别的方法<br>2.增加UpdateTerrain方法，用于动态地根据摄像机距离决定每个Tile应采取的LOD级别<br>3.在Update或者其他Tick方法中调用UpdateTerrain，<br>4.因为LOD级别随时可能改变，LOD接缝处理放到UpdateTerrain中</p>
 <h2 id="2-1-构建不同LOD-Mesh"><a href="#2-1-构建不同LOD-Mesh" class="headerlink" title="2.1.构建不同LOD Mesh"></a>2.1.构建不同LOD Mesh</h2><p>在Tile中需要为每个Tile构建不同LOD级别的Mesh，对于每个更低级的LOD级别，顶点数目设置成一半即可，例如我们有4级LOD分级，Tile的尺寸为256，那么LOD0：256顶点每行，LOD1：128每行，LOD2：64每行，LOD3：32每行</p>
 <figure>
-    <img src="images/Chapter03/Different_LOD_Meshes.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/Different_LOD_Meshes.png" width="700" height="392" alt="image">
     <figcaption>图：生成不同LOD层级网格</figcaption>
 </figure>
 
@@ -164,7 +171,7 @@
 <h2 id="2-3-获得全局LODMap"><a href="#2-3-获得全局LODMap" class="headerlink" title="2.3.获得全局LODMap"></a>2.3.获得全局LODMap</h2><p>之前提到过，要在UpdateTerrain中去处理LOD接缝，因为每个地块的LOD接缝都是动态改变的，我们需要实时地知道每个Tile当前的LOD级别，所以需要在确定LOD后，再进行接缝修补。为此我们只需要一个二维数组，记录每个Index下的Tile的LOD即可完成</p>
 <p>同样地因为在TerrainCluster中我们只知道这个Cluster下属的Tile的LOD级别，而不知道其他cluster下的Tile的LOD，这就会导致不同Cluster衔接的Tile之间出现接缝，如下图所示：</p>
 <figure>
-    <img src="images/Chapter03/Seam_BetweenClusters.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/Seam_BetweenClusters.png" width="700" height="392" alt="image">
     <figcaption>图：不同Cluster之间的接缝(图右)</figcaption>
 </figure>
 
@@ -184,7 +191,7 @@
 
 <p>在Tile的MeshData类中，传入具体的LOD级别和需要修复的边即可完成接缝修复。对于要修复的边，如果相邻的Tile的LOD级别更大（更没那么精细），我们只需要将它的多余的顶点设置为相邻顶点的高度即可，原理图如下所示：</p>
 <figure>
-    <img src="images/Chapter03/Condition_FixSeam.png" width="300" height="300" alt="image">
+    <img src="/images/Chapter03/Condition_FixSeam.png" width="300" height="300" alt="image">
     <figcaption>图：如果相邻Tile的LOD不同则需要修复</figcaption>
 </figure>
 
@@ -198,8 +205,8 @@
 
 <p>执行UpdateTerrain后，最终结果，无缝地形：</p>
 <figure>
-    <img src="images/Chapter03/Fixed01.png" width="700" height="392" alt="image">
-    <img src="images/Chapter03/Fixed02.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/Fixed01.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter03/Fixed02.png" width="700" height="392" alt="image">
     <figcaption>图：修补接缝后的地形</figcaption>
 </figure>
 
@@ -213,6 +220,13 @@
 
     
 
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/地形系统-LOD/">地形系统 LOD</a>
+    </span>
     
 
     </div>

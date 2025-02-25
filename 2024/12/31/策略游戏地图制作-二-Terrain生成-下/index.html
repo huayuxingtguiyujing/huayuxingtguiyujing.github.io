@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>策略游戏地图制作(二)_Terrain生成_下 | 记录游戏开发历程</title>
+  <title>策略游戏地图制作(二)-Terrain生成-下 | 只羊的博客 | 记录游戏开发历程</title>
 
   
   <meta name="author" content="huayuxingtguiyujing">
@@ -11,28 +11,32 @@
 
   
   <meta name="description" content="1.高度图处理1.1.高度图获取高度图本质上是一个二维数组，或者一个灰度图，存储指定xy坐标下的高度信息。运行时对高度数据采样来得知一个vert应该应用的高度，从而生成地形。可以通过一些算法生成高度图（如噪声），但为还原真实地形地貌，此处直接使用真实地理高度图，后续添加对地图的编辑功能来做微调
-首先">
+首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：https://earthexplorer.usgs.gov/
+打开网页后，在地图上点选以选取范围，转到DataSets下选择要下载的对应项
+
+    
+    图：USGS界面">
   
 
   
   
-  <meta name="keywords" content="">
+  <meta name="keywords" content="地形系统">
   
 
   <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <meta property="og:title" content="策略游戏地图制作(二)_Terrain生成_下"/>
+  <meta property="og:title" content="策略游戏地图制作(二)-Terrain生成-下"/>
 
-  <meta property="og:site_name" content="记录游戏开发历程"/>
+  <meta property="og:site_name" content="只羊的博客"/>
 
   
   <meta property="og:image" content="/favicon.ico"/>
   
 
   <link href="/favicon.ico" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="记录游戏开发历程" type="application/atom+xml">
+  <link rel="alternate" href="/atom.xml" title="只羊的博客" type="application/atom+xml">
   <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
 <meta name="generator" content="Hexo 7.3.0"></head>
 
@@ -44,16 +48,20 @@
     <header>
   <div class="site-branding">
     <h1 class="site-title">
-      <a href="/">记录游戏开发历程</a>
+      <a href="/">只羊的博客</a>
     </h1>
-    <p class="site-description"></p>
+    <p class="site-description">记录游戏开发历程</p>
   </div>
   <nav class="site-navigation">
     <ul>
       
-        <li><a href="/">Home</a></li>
+        <li><a href="/">主页</a></li>
       
-        <li><a href="/archives">Archives</a></li>
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+        <li><a href="/links">链接</a></li>
       
     </ul>
   </nav>
@@ -64,7 +72,7 @@
 
   
     
-    <h3 class="article-title"><span>策略游戏地图制作(二)_Terrain生成_下</span></h3>
+    <h3 class="article-title"><span>策略游戏地图制作(二)-Terrain生成-下</span></h3>
     
   
 
@@ -88,21 +96,23 @@
 <p>首先，要获取到真实地图的高度图数据。可以从一些开源的地理信息网站得到，此处以 USGS为例，网址为：<br><a href = "https://earthexplorer.usgs.gov/" target="_blank">https://earthexplorer.usgs.gov/</a></p>
 <p>打开网页后，在地图上点选以选取范围，转到DataSets下选择要下载的对应项</p>
 <figure>
-    <img src="images/Chapter02/Download_UGUS01.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/Download_UGUS01.png" width="700" height="392" alt="image">
     <figcaption>图：USGS界面</figcaption>
 </figure>
 
+<span id="more"></span>
 <p>点击result或直接转到results页面即获取到对应的地块信息，可以选择TIF、DEM格式，这里使用TIF，下载后得到灰度图</p>
 <figure>
-    <img src="images/Chapter02/Download_UGUS02.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/Download_UGUS02.png" width="700" height="392" alt="image">
     <figcaption>图：USGS界面</figcaption>
 </figure>
 
 <p>下载得到的高度图内容，分辨率3601x3601，大小30MB左右：</p>
 <figure>
-    <img src="images/Chapter02/Download_UGUS03.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/Download_UGUS03.png" width="700" height="392" alt="image">
     <figcaption>图：下载得到的高度图内容</figcaption>
 </figure>
+
 
 
 <h2 id="1-2-高度图的序列化"><a href="#1-2-高度图的序列化" class="headerlink" title="1.2.高度图的序列化"></a>1.2.高度图的序列化</h2><p>得到高度图资源后，就可以考虑先对高度图进行预处理了。简要说一下处理高度图数据的思路：</p>
@@ -110,7 +120,7 @@
 <p>思路已有，那么就可以开始了</p>
 <p>先进行高度图压缩，采用简单的双线性插值，原理如图。最终返回目的分辨率尺寸的高度数据：（其实在这里可以做进一步的压缩工作，如果我们追求的地图精度不需要太高，完全可以换成单通道-8bit纹理来存储数据，后续如优化有需要再做改动）</p>
 <figure>
-    <img src="images/Chapter02/Bilinear.png" width="400" height="400" alt="image">
+    <img src="/images/Chapter02/Bilinear.png" width="400" height="400" alt="image">
     <figcaption>图：双线性插值的原理</figcaption>
 </figure>
 
@@ -124,15 +134,15 @@
 
 <p>最终执行上面的方法，你可以自己定义编辑器窗口使用序列化功能。也可以在Odin编辑器中写一个对应的处理窗口，这里结合之前的编辑器搭建工作，写了个高度图编辑器，界面如下（由于Odin布局代码并不好看，此处不放上编辑器类的源码）：</p>
 <figure>
-    <img src="images/Chapter02/HeightEditor.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/HeightEditor.png" width="700" height="392" alt="image">
     <figcaption>图：高度图编辑器</figcaption>
 </figure>
  
 
 <p>点击上方的序列化高度图，在导出位置生成了序列化后的高度图文件：<br>（注：Odin部分的代码并不好看，此处仍然不放上，读者可自行通过Odin的API添加上导出与导入按钮的逻辑，上述的编辑器面板也仅是为了方便测试，重点在于序列化的逻辑）</p>
  <figure>
-    <img src="images/Chapter02/HeightData_Serialized.png" width="700" height="320" alt="image">
-    <img src="images/Chapter02/HeightData_Serialized02.png" width="700" height="50" alt="image">
+    <img src="/images/Chapter02/HeightData_Serialized.png" width="700" height="320" alt="image">
+    <img src="/images/Chapter02/HeightData_Serialized02.png" width="700" height="50" alt="image">
     <figcaption>图：序列化后的高度图文件</figcaption>
 </figure>
  
@@ -164,7 +174,7 @@
 <p>对于第一个问题，我们可以直接映射，获取到高度图尺寸与地形尺寸后，根据其宽高找到地形上的顶点在高度图上对应的数据</p>
 <p>对于第二个问题，先前提到，因为我们使用真实地理数据，所以TerrainCluster对应的TIF高度图文件都是有经纬度标注的，这也许可以作为构建每个Cluster的次序的信息。如果你使用其他途径得到的高度图数据，可以手动为每个高度图添加次序。</p>
 <figure>
-    <img src="images/Chapter02/DownloadFile_UGUS.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/DownloadFile_UGUS.png" width="700" height="392" alt="image">
     <figcaption>图：UGUS上下载的TIF高度图均有指定格式：n{纬度}_e{经度}</figcaption>
 </figure>
 
@@ -188,7 +198,7 @@
 <p>2.3.初步的地貌样式</p>
 <p>目前的地形还是一张平面图，是时候应用上我们之前构建的高度图数据了，让它有些高低起伏了。在执行完上面的结果之后会看到以下的地形白膜：</p>
 <figure>
-    <img src="images/Chapter02/Terrain_Result01.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/Terrain_Result01.png" width="700" height="392" alt="image">
     <figcaption>图：地形白膜</figcaption>
 </figure>
 
@@ -203,7 +213,7 @@
 <p>Shader可以生成材质，再通过代码或者直接到MeshRender那里挂接从而生成最终的地形。</p>
 <p>本篇日志是最基础的地形搭建，在完成了上述的操作后，使用之前生成的高度图数据，就可以在Editor中生成地形，看到以下有基本地貌的地形，这也就意味着我们迈出了重要的第一步了！</p>
 <figure>
-    <img src="images/Chapter02/Terrain_Result02.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter02/Terrain_Result02.png" width="700" height="392" alt="image">
     <figcaption>图：有基本地貌的地形</figcaption>
 </figure> 
 
@@ -218,6 +228,13 @@
 
     
 
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/地形系统/">地形系统</a>
+    </span>
     
 
     </div>

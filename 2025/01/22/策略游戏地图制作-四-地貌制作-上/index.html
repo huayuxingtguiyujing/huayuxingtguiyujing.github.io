@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>策略游戏地图制作(四)-地貌制作-上 | 记录游戏开发历程</title>
+  <title>策略游戏地图制作(四)-地貌制作-上 | 只羊的博客 | 记录游戏开发历程</title>
 
   
   <meta name="author" content="huayuxingtguiyujing">
@@ -17,12 +17,12 @@
 
 
 
-1.1.一些游戏中的地貌游戏《欧陆风云4》的地图相关资源暴露比较充分，在 Europa Universalis IV ">
+1.1.一些游戏中的地貌游戏《欧陆风云4》的地图相关资源暴露比较充分，在 Europa Universalis IV &amp;#x2F; map 文件夹下存放了大量与游戏地图构建相关的纹理资产、地貌图集、区域划分等文件。">
   
 
   
   
-  <meta name="keywords" content="">
+  <meta name="keywords" content="地形系统 地貌">
   
 
   <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
@@ -31,14 +31,14 @@
 
   <meta property="og:title" content="策略游戏地图制作(四)-地貌制作-上"/>
 
-  <meta property="og:site_name" content="记录游戏开发历程"/>
+  <meta property="og:site_name" content="只羊的博客"/>
 
   
   <meta property="og:image" content="/favicon.ico"/>
   
 
   <link href="/favicon.ico" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="记录游戏开发历程" type="application/atom+xml">
+  <link rel="alternate" href="/atom.xml" title="只羊的博客" type="application/atom+xml">
   <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
 <meta name="generator" content="Hexo 7.3.0"></head>
 
@@ -50,16 +50,20 @@
     <header>
   <div class="site-branding">
     <h1 class="site-title">
-      <a href="/">记录游戏开发历程</a>
+      <a href="/">只羊的博客</a>
     </h1>
-    <p class="site-description"></p>
+    <p class="site-description">记录游戏开发历程</p>
   </div>
   <nav class="site-navigation">
     <ul>
       
-        <li><a href="/">Home</a></li>
+        <li><a href="/">主页</a></li>
       
-        <li><a href="/archives">Archives</a></li>
+        <li><a href="/archives">归档</a></li>
+      
+        <li><a href="/about">关于</a></li>
+      
+        <li><a href="/links">链接</a></li>
       
     </ul>
   </nav>
@@ -92,29 +96,32 @@
       
         <h1 id="1-地貌制作概述"><a href="#1-地貌制作概述" class="headerlink" title="1.地貌制作概述"></a>1.地貌制作概述</h1><p>本节先以一些策略游戏里的地貌为例，解释它们的地图地貌，之后提出一个简单的地貌模型，以下是该地貌模型应用到地形上的预览</p>
 <figure>
-    <img src="images/Chapter04/ApplyToTerrainResult.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter04/ApplyToTerrainResult.png" width="350" height="350" alt="image">
     <figcaption>图：让地形应用地貌图</figcaption>
 </figure>
 
 
 <h2 id="1-1-一些游戏中的地貌"><a href="#1-1-一些游戏中的地貌" class="headerlink" title="1.1.一些游戏中的地貌"></a>1.1.一些游戏中的地貌</h2><p>游戏《欧陆风云4》的地图相关资源暴露比较充分，在 Europa Universalis IV &#x2F; map 文件夹下存放了大量与游戏地图构建相关的纹理资产、地貌图集、区域划分等文件。</p>
+<span id="more"></span>
+
 <p>在map\terrain文件中列出了所有的地形种类，所有地形都有对应的色彩表。常用的地形颜色有：平原（86 124 27），丘陵（0 86 6），海岸线（255 247 0），山脉（65 42 17），沼泽&#x2F;湿地（75 147 174），草原（200 214 107），沙漠（200 214 107）。</p>
 <p>这里采用的方式是地形以纯色对应，输出一张简单地貌图，即下图。在这张简单地貌图中已有大致的地貌样式，地图效果也勉强可以。但仅仅是简单的纯色图还是太单调了，可以使用更多的操作来提升地图效果。通常来讲有很多的做法，如叠加噪声让地表看起来起伏不平，叠加纹理贴图等。</p>
 <figure>
-    <img src="images/Chapter04/EU4_Terrain.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter04/EU4_Terrain.png" width="700" height="392" alt="image">
     <figcaption>图：地形图 Europa Universalis IV\map\terrain.bmp</figcaption>
 </figure>
 
+
 <p>下图是游戏地图里的秋季地貌，混合了地形纹理之后进行导出。可以从图中看出terrain.bmp即纯色地图的概貌，在纯色地图的基础上叠加地形纹理，再做colorgrading之类的操作即可得到下图。当然，按下图的精细度，仅有上面的步骤还是不行的，如果只考虑程序化生成，还需要叠加高度图、法线图等：</p>
 <figure>
-    <img src="images/Chapter04/EU4_AutumnLandform.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter04/EU4_AutumnLandform.png" width="700" height="392" alt="image">
     <figcaption>图：秋季地貌 Europa Universalis IV\map\terrain\colormap_autumn.dds</figcaption>
 </figure>
 
 
 <p>下图是游戏地貌的图集资产，这些纹理会叠加到地形图上。地形底色如上方所说是纯色对应。使用纯色作为有很多好处，如做季节、天气变化效果时，可以根据一张额外的混合贴图修改地图底色，省去很多操作。</p>
 <figure>
-    <img src="images/Chapter04/EU4_LandformAltas.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/EU4_LandformAltas.png" width="500" height="392" alt="image">
     <figcaption>图：地貌混合图集</figcaption>
 </figure>
 
@@ -125,13 +132,13 @@
 <p>我们可以按照以下理念确定地形：<br>-温度越低的地方越偏冷色调，越高的地方偏暖色调；<br>-湿度越高的地方绿色越重，否则就越干旱，黄色更重；<br>-每种地形均是纯色，可以使用插值来丰富下表现；</p>
 <p>基于此，我们简单地根据温度、湿度做个地形颜色对应图，如图所示：</p>
 <figure>
-    <img src="images/Chapter04/SimpleLandformModel.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/SimpleLandformModel.png" width="500" height="392" alt="image">
     <figcaption>图：简单地貌模型</figcaption>
 </figure>
  
 <p>一个地点的高度可以由高度图得出，湿度图、温度图可以由真实地理数据得出，或者手刷（通过绘图工具即可），使用时获取到数值即可，然后映射到地形纯色</p>
 <figure>
-    <img src="images/Chapter04/AHumidityMap.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/AHumidityMap.png" width="500" height="392" alt="image">
     <figcaption>图：一张湿度图范例</figcaption>
 </figure>
 
@@ -145,24 +152,24 @@
 
 <p>执行上述的导出逻辑后，可以获得如下的地貌图：</p>
 <figure>
-    <img src="images/Chapter04/ExportedLandfomMap01.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/ExportedLandfomMap01.png" width="500" height="392" alt="image">
     <figcaption>图：导出后的地貌图</figcaption>
 </figure>
  
 <p>如果需要自定义地形颜色，更改颜色后，又可以得到不一样的地貌图</p>
  <figure>
-    <img src="images/Chapter04/ExportedLandfomMap02.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/ExportedLandfomMap02.png" width="500" height="392" alt="image">
     <figcaption>图：修改地形颜色后的地貌图</figcaption>
 </figure>
 
 <p>将该地貌贴图应用于地形上（因为只是应用一张贴图，shader逻辑并不复杂，此处不放），效果图如下：</p>
  <figure>
-    <img src="images/Chapter04/ApplyToTerrainResult.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/ApplyToTerrainResult.png" width="500" height="392" alt="image">
     <figcaption>图：让地形应用地貌图</figcaption>
 </figure>
 
  <figure>
-    <img src="images/Chapter04/ApplyToTerrainResult_Close.png" width="700" height="392" alt="image">
+    <img src="/images/Chapter04/ApplyToTerrainResult_Close.png" width="700" height="392" alt="image">
     <figcaption>图：拉近后的效果</figcaption>
 </figure>
 
@@ -171,7 +178,7 @@
 <p>通常来讲，当我们需要混合多个地形纹理时，有如下的方案<br>-直接使用一张BlendTexture存储权重，例如BlendTexture四个通道RGBA各自存储对应的纹理图的权重值。是比较直观又简单的方法，支持四张纹理混合<br>-使用纹理的A通道存储权重，即为每张贴图多添加一个A通道存权重（透明度），叠加得到最终颜色</p>
 <p>上述的方案在地形纹理规模扩大的时候弊病会显得很严重，如果有n张纹理，就需要有n&#x2F;4张索引贴图，采样n+n&#x2F;4，如果算上法线则更加严重。所以目前的游戏制作主流方案会采用一张IndexTexture+纹理图集来减少采样次数，采样时先获取索引再去找到图集对应纹理（2次）。</p>
 <figure>
-    <img src="images/Chapter04/TextureArraySample.png" width="500" height="392" alt="image">
+    <img src="/images/Chapter04/TextureArraySample.png" width="500" height="392" alt="image">
     <figcaption>图：一张纹理图集</figcaption>
 </figure>
 
@@ -191,6 +198,13 @@
 
     
 
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/地形系统-地貌/">地形系统 地貌</a>
+    </span>
     
 
     </div>
