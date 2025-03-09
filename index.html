@@ -63,6 +63,62 @@
 
   
     
+    <h3 class="article-title"><a href="/2025/03/09/策略游戏地图制作-五-地形减面-上/"><span>策略游戏地图制作-五-地形减面-上</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2025/03/09/策略游戏地图制作-五-地形减面-上/" rel="bookmark">
+        <time class="entry-date published" datetime="2025-03-09T09:47:22.000Z">
+          2025-03-09
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <h1 id="1-地形减面"><a href="#1-地形减面" class="headerlink" title="1.地形减面"></a>1.地形减面</h1><p>在我们之前的地形制作中采用平铺方案制作地形Mesh，但Terrain平铺在大部分情况下是很浪费的，例如在平原这种不需要多少顶点表达的区域，或者其他坡度低、斜率低、变化小的地带。加上如果要支持超大规模的地图，还需要做很多优化，所以应当做进一步的减面处理。</p>
+<p>下面使用经典的QEM算法对Terrain进行减面操作，写这个的过程也算是在做减面插件，只不过地形的减面需要注意不同地块之间的接缝，避免连接出问题。下面是本节结束后的减面效果演示：</p>
+<figure>
+    <img src="/images/Chapter05/MeshReduce_Result.png" width="550" height="450" alt="image">
+    <figcaption>图：地形Mesh减面前后对比</figcaption>
+</figure>
+
+
+<h2 id="1-1-已有的地形减面方案"><a href="#1-1-已有的地形减面方案" class="headerlink" title="1.1.已有的地形减面方案"></a>1.1.已有的地形减面方案</h2><p>以下列举一些已有的减面工具，以供参考</p>
+        
+          <p><a class="excerpt-btn" href="/2025/03/09/策略游戏地图制作-五-地形减面-上/"><span>---阅读全文---</span></a></p>
+        
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2025/01/22/策略游戏地图制作-四-地貌制作-上/"><span>策略游戏地图制作(四)-地貌制作-上</span></a></h3>
     
   
